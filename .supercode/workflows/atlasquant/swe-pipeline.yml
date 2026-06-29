@@ -1,13 +1,29 @@
-# SWE Pipeline — SDD конвейер: Plane → Architect → TAUS → Grounding → Implement → Review
-# Модель quality gates из AI SWE (Spec-Driven Development)
+# SWE Pipeline — SDD конвейер: Plane MCP → Architect → TAUS → Grounding → Implement → Review
+# Plane sync через Plane MCP Server (stdio), не curl-скрипты
 
 "SWE Pipeline (Plane)":
   icon: "🚀"
   menu: buttons
   actions:
-    - name: "📥 Load Plane Issue"
-      prompt:
-        command: 'bash .supercode/workflows/atlasquant/scripts/fetch-plane-issue.sh'
+    - name: "📥 Load Plane Issue (MCP)"
+      systemPrompt:
+        command: 'bash .supercode/workflows/atlasquant/scripts/plane-mcp-context.sh load'
+      prompt: |
+        Загрузи задачу из Plane через **Plane MCP** (сервер `plane`, контекст в system prompt).
+
+        1. Получи work item (`retrieve_work_item` или `retrieve_work_item_by_identifier`)
+        2. Если state не Agent Ready — предупреди, но продолжай
+        3. Claim: `update_work_item` → spec_review + `create_work_item_comment`
+        4. `bash .supercode/workflows/atlasquant/scripts/init-agent-run.sh <slug> "<title>"`
+
+        Выведи brief для следующих этапов:
+        - Заголовок, sequence slug (ATLASQUANT-N), issue UUID
+        - Description (plain text)
+        - Ссылки на docs/specs/<slug>.md и docs/plans/<slug>.md
+        - SDD workflow steps 1–6
+
+        Follow AGENTS.md.
+      instantRun: true
 
     - name: "🏗️ Architect (Brief → Spec + Plan)"
       actions:
@@ -52,7 +68,7 @@
         Если OK — PR summary:
         - Title (conventional commit style)
         - Body: AC checklist + evidence table + test commands run
-        - Plane state stays Review (move to Done manually after PR merge)
+        - Plane state stays Review (move to Done manually after PR merge via MCP: update_work_item → done)
       instantRun: true
 
 "SWE Pipeline (Manual)":

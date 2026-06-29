@@ -28,12 +28,14 @@
 
     **Если TAUS пройден:**
     1. Установи `Status: active` в spec и plan
-    2. Выведи: `GATE_1: PASS` и список AC
+    2. Запиши строку `GATE_1: PASS` в `.agent-run/gate-1.result`
+    3. Выведи: `GATE_1: PASS` и список AC
 
     **Если не пройден:**
     1. Оставь `Status: draft`
-    2. Выведи: `GATE_1: FAIL` и numbered list правок (конкретно, без «улучши»)
-    3. НЕ переходи к реализации
+    2. Запиши строку `GATE_1: FAIL` в `.agent-run/gate-1.result`
+    3. Выведи: `GATE_1: FAIL` и numbered list правок (конкретно, без «улучши»)
+    4. НЕ переходи к реализации
   instantRun: true
 
 "SWE Spec Review Loop":
@@ -44,21 +46,37 @@
       actions:
         - "SWE Spec Review"
 
+    - name: "🔍 Evaluate Gate 1"
+      prompt:
+        command: 'bash .supercode/workflows/atlasquant/scripts/check-gate-1.sh'
+
     - name: "✓ Gate 1 Passed"
       if:
         type: shell
         value: 'echo "$prompt" | grep -q "GATE_1: PASS"'
-      prompt:
-        command: 'bash .supercode/workflows/atlasquant/scripts/update-plane-state.sh grounding "Gate 1 PASS → Grounding" 2>&1 || true; echo "Spec/plan active. Proceed to Grounding."'
+      systemPrompt:
+        command: 'bash .supercode/workflows/atlasquant/scripts/plane-mcp-context.sh transition grounding "Gate 1 PASS → Grounding"'
+      prompt: |
+        Gate 1 TAUS passed. Синхронизируй Plane через MCP (см. system context):
+        1. `update_work_item` → state grounding
+        2. `create_work_item_comment` с текстом комментария
+
+        Выведи: Spec/plan active. Proceed to Grounding.
+      instantRun: true
 
     - name: "❌ Revise Spec"
       if:
-        type: js
-        value: 'prompt.includes("GATE_1: FAIL")'
+        type: shell
+        value: 'echo "$prompt" | grep -q "GATE_1: FAIL"'
       actions:
-        - name: "🚫 Plane → Blocked"
-          prompt:
-            command: 'bash .supercode/workflows/atlasquant/scripts/update-plane-state.sh blocked "Gate 1 FAIL" 2>&1 || true'
+        - name: "🚫 Plane → Blocked (MCP)"
+          systemPrompt:
+            command: 'bash .supercode/workflows/atlasquant/scripts/plane-mcp-context.sh transition blocked "Gate 1 FAIL"'
+          prompt: |
+            Gate 1 failed. Через Plane MCP:
+            1. `update_work_item` → state blocked
+            2. `create_work_item_comment` `<p>Gate 1 FAIL</p>`
+          instantRun: true
         - name: "🏗️ Fix Spec/Plan"
           actions:
             - "SWE Architect"

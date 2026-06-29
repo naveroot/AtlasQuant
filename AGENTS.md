@@ -265,5 +265,5 @@ chore: обновить зависимости
 - Implement **только** при `Status: active` в spec/plan **и** Plane state **Implement** (или позже)
 - **Нет evidence → не done** (AC → file/test в PR)
 - Ralph Loop state: `.agent-run/` (per session, gitignored)
-- Plane status sync: см. [docs/agent-pipeline/README.md](docs/agent-pipeline/README.md)
+- Plane status sync: см. [docs/agent-pipeline/README.md](docs/agent-pipeline/README.md) (Plane MCP в Cursor, REST в orchestrator)
 - При сбое CI — fix code; при конфликте plan/codebase — revise plan; Plane → **Blocked**

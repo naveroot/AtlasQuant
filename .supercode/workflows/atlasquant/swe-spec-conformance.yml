@@ -20,10 +20,12 @@
     Обнови `.agent-run/verification-loop.md` если есть.
 
     **Если все AC закрыты:**
+    - Запиши `GATE_4: PASS` в `.agent-run/gate-4.result`
     - Выведи `GATE_4: PASS`
     - Evidence table: AC → file/test
 
     **Если gaps:**
+    - Запиши `GATE_4: FAIL` в `.agent-run/gate-4.result`
     - Выведи `GATE_4: FAIL`
     - Список незакрытых AC
     - Минимальные правки (Implement), не менять spec без причины
@@ -37,21 +39,33 @@
       actions:
         - "SWE Spec Conformance"
 
+    - name: "🔍 Evaluate Gate 4"
+      prompt:
+        command: 'bash .supercode/workflows/atlasquant/scripts/check-gate-4.sh'
+
     - name: "✓ All AC Met"
       if:
         type: shell
         value: 'echo "$prompt" | grep -q "GATE_4: PASS"'
-      prompt:
-        command: 'bash .supercode/workflows/atlasquant/scripts/update-plane-state.sh review "Gate 4 PASS → Review" 2>&1 || true; echo "Spec conformance OK. Write PR summary with evidence table."'
+      systemPrompt:
+        command: 'bash .supercode/workflows/atlasquant/scripts/plane-mcp-context.sh transition review "Gate 4 PASS → Review"'
+      prompt: |
+        Gate 4 passed. Синхронизируй Plane через MCP → state review + comment.
+
+        Выведи: Spec conformance OK. Write PR summary with evidence table.
+      instantRun: true
 
     - name: "❌ Close AC Gaps"
       if:
-        type: js
-        value: 'prompt.includes("GATE_4: FAIL")'
+        type: shell
+        value: 'echo "$prompt" | grep -q "GATE_4: FAIL"'
       actions:
-        - name: "🚫 Plane → Blocked"
-          prompt:
-            command: 'bash .supercode/workflows/atlasquant/scripts/update-plane-state.sh blocked "Gate 4 FAIL" 2>&1 || true'
+        - name: "🚫 Plane → Blocked (MCP)"
+          systemPrompt:
+            command: 'bash .supercode/workflows/atlasquant/scripts/plane-mcp-context.sh transition blocked "Gate 4 FAIL"'
+          prompt: |
+            Gate 4 failed. Через Plane MCP: blocked + comment.
+          instantRun: true
         - name: "⚙️ Implement Missing AC"
           actions:
             - "SWE Implement"

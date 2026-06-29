@@ -25,11 +25,13 @@
     Обнови `.agent-run/active-context.md` (если есть) рабочими фактами.
 
     **Если grounding OK:**
+    - Запиши `GATE_2: PASS` в `.agent-run/gate-2.result`
     - Выведи `GATE_2: PASS`
     - Список файлов для изменения
     - Первый checkbox для Implement
 
     **Если проблемы:**
+    - Запиши `GATE_2: FAIL` (или `GATE_2: BLOCKED`) в `.agent-run/gate-2.result`
     - Выведи `GATE_2: FAIL`
     - Конкретные конфликты
     - Рекомендации: правки plan (→ Architect) или уточнение spec
@@ -43,21 +45,35 @@
       actions:
         - "SWE Grounding"
 
+    - name: "🔍 Evaluate Gate 2"
+      prompt:
+        command: 'bash .supercode/workflows/atlasquant/scripts/check-gate-2.sh'
+
     - name: "✓ Gate 2 Passed"
       if:
         type: shell
         value: 'echo "$prompt" | grep -q "GATE_2: PASS"'
-      prompt:
-        command: 'bash .supercode/workflows/atlasquant/scripts/update-plane-state.sh implement "Gate 2 PASS → Implement" 2>&1 || true; echo "Grounding OK. Proceed to Implement."'
+      systemPrompt:
+        command: 'bash .supercode/workflows/atlasquant/scripts/plane-mcp-context.sh transition implement "Gate 2 PASS → Implement"'
+      prompt: |
+        Gate 2 passed. Синхронизируй Plane через MCP:
+        1. `update_work_item` → state implement
+        2. `create_work_item_comment`
+
+        Выведи: Grounding OK. Proceed to Implement.
+      instantRun: true
 
     - name: "❌ Grounding Failed"
       if:
-        type: js
-        value: 'prompt.includes("GATE_2: FAIL") || prompt.includes("GATE_2: BLOCKED")'
+        type: shell
+        value: 'echo "$prompt" | grep -q "GATE_2: FAIL"'
       actions:
-        - name: "🚫 Plane → Blocked"
-          prompt:
-            command: 'bash .supercode/workflows/atlasquant/scripts/update-plane-state.sh blocked "Gate 2 FAIL/BLOCKED" 2>&1 || true'
+        - name: "🚫 Plane → Blocked (MCP)"
+          systemPrompt:
+            command: 'bash .supercode/workflows/atlasquant/scripts/plane-mcp-context.sh transition blocked "Gate 2 FAIL/BLOCKED"'
+          prompt: |
+            Grounding failed. Через Plane MCP переведи задачу в blocked и добавь комментарий.
+          instantRun: true
         - name: "🏗️ Revise Plan"
           actions:
             - "SWE Architect"

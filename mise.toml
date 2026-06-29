@@ -3,6 +3,7 @@ ruby = "3.2.11"
 postgres = "16"
 node = "22"
 "github:cli/cli" = "2.89.0"
+uv = "latest"
 
 [tasks."orchestrator:install"]
 description = "Install orchestrator npm dependencies"
@@ -26,3 +27,7 @@ description = "Start cloud agent for a Plane issue (pass -- --issue=<uuid>)"
 depends = ["orchestrator:install"]
 dir = ".orchestrator"
 run = "npm run agent"
+
+[tasks."plane-mcp:setup"]
+description = "Generate .cursor/mcp.json for self-hosted Plane MCP (stdio)"
+run = "bash .supercode/workflows/atlasquant/scripts/setup-plane-mcp.sh"

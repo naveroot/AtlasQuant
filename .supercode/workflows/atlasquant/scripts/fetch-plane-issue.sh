@@ -1,4 +1,6 @@
 #!/usr/bin/env bash
+# DEPRECATED: используйте Plane MCP в SWE Pipeline (Load Issue / gate transitions).
+# Fallback для headless/CI — прямой Plane REST API.
 # Загружает текст задачи из Plane API в stdout (становится $prompt).
 set -euo pipefail
 
@@ -104,8 +106,8 @@ fi
 
 # Claim task: move to Spec Review
 if [[ -n "${PLANE_STATE_SPEC_REVIEW:-}" || -f "${SCRIPT_DIR}/../../../../.orchestrator/config.yml" ]]; then
-  bash "${SCRIPT_DIR}/update-plane-state.sh" spec_review "Pipeline: Load Issue → Spec Review" 2>/dev/null \
-    || echo "Warning: could not update Plane state to spec_review (check state UUIDs)" >&2
+  PLANE_ISSUE_ID="${ISSUE_ID}" bash "${SCRIPT_DIR}/update-plane-state.sh" spec_review "Pipeline: Load Issue → Spec Review" \
+    || echo "Warning: could not update Plane state to spec_review (check state UUIDs and PLANE_API_KEY)" >&2
 fi
 
 cat <<EOF

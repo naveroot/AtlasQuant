@@ -1,4 +1,6 @@
 #!/usr/bin/env bash
+# DEPRECATED: используйте Plane MCP (`update_work_item` + `create_work_item_comment`).
+# Fallback для headless/CI — прямой Plane REST API.
 # PATCH Plane work item state by config key (ready, spec_review, grounding, …)
 # Usage: update-plane-state.sh <state_key> [comment]
 set -euo pipefail

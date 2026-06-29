@@ -80,12 +80,32 @@ npm run setup:states   # создаёт Agent Ready, Spec Review, … в Plane
    ```
 4. Pipeline: Architect → TAUS → Grounding → Implement → CI → Conformance → Review
 
-### 3. Pilot с Plane
+### 3. Pilot с Plane (Plane MCP)
 
-1. Скопируйте `.supercode/workflows/atlasquant/.env.example` → `.env`
-2. Заполните `PLANE_API_KEY`, `PLANE_WORKSPACE`, `PLANE_PROJECT_ID`, `PLANE_ISSUE_IDENTIFIER`, `PLANE_STATE_*`
+1. Настройте Plane MCP для self-hosted инстанса:
+   ```bash
+   cd AtlasQuant
+   cp .supercode/workflows/atlasquant/.env.example .supercode/workflows/atlasquant/.env
+   # Заполните PLANE_API_KEY, PLANE_ISSUE_IDENTIFIER, PLANE_STATE_*
+   mise run plane-mcp:setup   # генерирует ../.cursor/mcp.json (stdio → plane.alfapulse.ru)
+   ```
+2. Reload Cursor (`Cmd+Shift+P → Reload Window`), проверьте MCP server **plane** в Settings
 3. Переведите задачу в Plane в статус **Agent Ready**
-4. Supercode menu → **SWE Pipeline (Plane)**
+4. Supercode menu → **SWE Pipeline (Plane)** → **Load Plane Issue (MCP)**
+
+> **Важно:** глобальный `~/.cursor/mcp.json` с `mcp.plane.so` работает только с Plane Cloud.
+> Для self-hosted `plane.alfapulse.ru` нужен stdio-сервер (`plane-mcp-server`) через `mise run plane-mcp:setup`.
+
+### Plane MCP в pipeline
+
+| Этап | Было (curl) | Стало (MCP) |
+|------|-------------|-------------|
+| Load Issue | `fetch-plane-issue.sh` | `retrieve_work_item*` + `update_work_item` |
+| Gate transitions | `update-plane-state.sh` | `update_work_item` + `create_work_item_comment` |
+
+Контекст (project_id, state UUIDs): `bash .supercode/workflows/atlasquant/scripts/plane-mcp-context.sh load`
+
+Cloud orchestrator (`.orchestrator/`) по-прежнему использует Plane REST API — у cloud agent нет MCP.
 
 ## Cloud Agent (удалённое исполнение)
 
@@ -156,8 +176,11 @@ docs/
 ├── swe-implement.yml                 # Gate 3: code + CI loop
 ├── swe-spec-conformance.yml          # Gate 4
 └── scripts/
-    ├── fetch-plane-issue.sh
-    ├── update-plane-state.sh         # PATCH Plane state by key
+    ├── plane-mcp-server.sh           # stdio wrapper для Cursor MCP
+    ├── plane-mcp-context.sh          # контекст для Supercode prompts
+    ├── setup-plane-mcp.sh            # генерирует .cursor/mcp.json
+    ├── fetch-plane-issue.sh          # DEPRECATED fallback (REST)
+    ├── update-plane-state.sh         # DEPRECATED fallback (REST)
     ├── init-agent-run.sh             # Ralph Loop init
     └── run-ci-gate.sh
 
@@ -169,7 +192,7 @@ docs/
 
 | Этап | Supercode | Plane state | Cloud Agent |
 |------|-----------|-------------|-------------|
-| Intake | `fetch-plane-issue.sh` | → Spec Review | `buildAgentPrompt()` |
+| Intake | Plane MCP (`retrieve_work_item*`) | → Spec Review | `buildAgentPrompt()` |
 | Architect | SWE Architect | Spec Review | Phase 1 in prompt |
 | Gate 1 TAUS | SWE Spec Review Loop | → Grounding / Blocked | Self TAUS in prompt |
 | Gate 2 Grounding | SWE Grounding Loop | → Implement / Blocked | Phase 2 in prompt |

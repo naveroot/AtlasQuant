@@ -54,9 +54,12 @@
         type: js
         value: 'prompt.trim() !== "" && !prompt.includes("Exit code: 0")'
       actions:
-        - name: "🚫 Plane → Blocked"
-          prompt:
-            command: 'bash .supercode/workflows/atlasquant/scripts/update-plane-state.sh blocked "Gate 3 FAIL — CI" 2>&1 || true'
+        - name: "🚫 Plane → Blocked (MCP)"
+          systemPrompt:
+            command: 'bash .supercode/workflows/atlasquant/scripts/plane-mcp-context.sh transition blocked "Gate 3 FAIL — CI"'
+          prompt: |
+            Gate 3 CI failed. Через Plane MCP: `update_work_item` → blocked + comment.
+          instantRun: true
         - name: "🔧 Fix Issues"
           systemPrompt:
             command: 'cat AGENTS.md'
