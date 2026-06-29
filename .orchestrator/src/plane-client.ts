@@ -185,9 +185,10 @@ export class PlaneClient {
   async listStates(): Promise<PlaneState[]> {
     const states: PlaneState[] = [];
     let cursor: string | undefined;
+    const perPage = 100;
 
     do {
-      const params = new URLSearchParams({ per_page: "100" });
+      const params = new URLSearchParams({ per_page: String(perPage) });
       if (cursor) params.set("cursor", cursor);
 
       const page = await this.request<PlaneStateList | PlaneState[]>(
@@ -196,8 +197,12 @@ export class PlaneClient {
 
       const batch = Array.isArray(page) ? page : (page.results ?? []);
       states.push(...batch);
+
+      // Plane always returns next_cursor even on the last page — stop when the page is short.
+      if (batch.length < perPage) break;
       cursor = Array.isArray(page) ? undefined : page.next_cursor;
-    } while (cursor);
+      if (!cursor) break;
+    } while (true);
 
     return states;
   }
@@ -247,11 +252,30 @@ export class PlaneClient {
     return states.find((s) => s.name.toLowerCase() === name.toLowerCase());
   }
 
-  /** @deprecated Use filterByState with plane.states.ready instead */
-  filterAgentReady(items: PlaneWorkItem[], labelId: string): PlaneWorkItem[] {
+  hasLabel(item: PlaneWorkItem, labelId: string): boolean {
+    return (item.labels ?? []).some((l) => l.id === labelId);
+  }
+
+  /**
+   * Issues eligible for orchestrator dispatch:
+   * - state = Agent Ready, or
+   * - label agent-ready (legacy) while not already in a pipeline state
+   */
+  filterDispatchReady(
+    items: PlaneWorkItem[],
+    readyStateId: string,
+    agentReadyLabelId: string | undefined,
+    pipelineStateIds: ReadonlySet<string>,
+  ): PlaneWorkItem[] {
     return items.filter((item) => {
-      const labels = item.labels ?? [];
-      return labels.some((l) => l.id === labelId);
+      const stateId = getWorkItemStateId(item);
+      if (stateId === readyStateId) return true;
+
+      if (!agentReadyLabelId || !this.hasLabel(item, agentReadyLabelId)) {
+        return false;
+      }
+
+      return !stateId || !pipelineStateIds.has(stateId);
     });
   }
 }

@@ -57,18 +57,45 @@ async function pollOnce(): Promise<void> {
   const readyStateId = getStateId(config, "ready");
   const specReviewStateId = getStateId(config, "spec_review");
   const blockedStateId = getStateId(config, "blocked");
+  const agentReadyLabelId = process.env.PLANE_AGENT_READY_LABEL_ID;
+
+  const pipelineStateIds = new Set([
+    specReviewStateId,
+    getStateId(config, "grounding"),
+    getStateId(config, "implement"),
+    getStateId(config, "review"),
+    blockedStateId,
+    getStateId(config, "done"),
+    getStateId(config, "cancelled"),
+  ]);
 
   const items = await plane.listWorkItems();
-  const ready = plane.filterByState(items, readyStateId);
+  const readyByState = plane.filterByState(items, readyStateId);
+  const ready = plane.filterDispatchReady(
+    items,
+    readyStateId,
+    agentReadyLabelId,
+    pipelineStateIds,
+  );
+  const readyByLabel = ready.filter(
+    (item) => !readyByState.some((s) => s.id === item.id),
+  );
 
-  const pending = ready.filter((item) => !failedState.failed.includes(item.id));
+  const pending = ready
+    .filter((item) => !failedState.failed.includes(item.id))
+    .sort((a, b) => a.sequence_id - b.sequence_id);
 
   console.log(
-    `[${new Date().toISOString()}] Plane: ${items.length} issues, ${ready.length} agent-ready, ${pending.length} pending`,
+    `[${new Date().toISOString()}] Plane: ${items.length} issues, ` +
+      `${ready.length} dispatch-ready (${readyByState.length} state, ${readyByLabel.length} label), ` +
+      `${pending.length} pending`,
   );
 
   if (pending.length === 0) {
-    console.log(`[${new Date().toISOString()}] No issues in Agent Ready state`);
+    console.log(
+      `[${new Date().toISOString()}] No dispatch-ready issues ` +
+        `(need state "Agent Ready" or label "agent-ready")`,
+    );
     return;
   }
 
@@ -106,8 +133,12 @@ async function main(): Promise<void> {
   const config = loadConfig();
   const once = process.argv.includes("--once");
 
+  const labelId = process.env.PLANE_AGENT_READY_LABEL_ID;
   console.log(`Plane poller started (interval: ${config.plane.poll_interval_seconds}s)`);
   console.log(`Trigger state: ready (${getStateId(config, "ready")})`);
+  if (labelId) {
+    console.log(`Label fallback: agent-ready (${labelId})`);
+  }
 
   do {
     try {
