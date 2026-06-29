@@ -19,7 +19,7 @@
 
     - name: "🧭 Gate 2: Grounding"
       actions:
-        - "SWE Grounding"
+        - "SWE Grounding Loop"
 
     - name: "⚙️ Gate 3: Implement + CI"
       actions:
@@ -52,6 +52,7 @@
         Если OK — PR summary:
         - Title (conventional commit style)
         - Body: AC checklist + evidence table + test commands run
+        - Plane state stays Review (move to Done manually after PR merge)
       instantRun: true
 
 "SWE Pipeline (Manual)":
@@ -68,7 +69,7 @@
 
     - name: "🧭 Gate 2: Grounding"
       actions:
-        - "SWE Grounding"
+        - "SWE Grounding Loop"
 
     - name: "⚙️ Implement + CI"
       actions:

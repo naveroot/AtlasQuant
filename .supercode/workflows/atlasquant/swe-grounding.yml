@@ -34,3 +34,31 @@
     - Конкретные конфликты
     - Рекомендации: правки plan (→ Architect) или уточнение spec
   instantRun: true
+
+"SWE Grounding Loop":
+  icon: "🔄"
+  menu: buttons
+  actions:
+    - name: "🧭 Grounding Check"
+      actions:
+        - "SWE Grounding"
+
+    - name: "✓ Gate 2 Passed"
+      if:
+        type: shell
+        value: 'echo "$prompt" | grep -q "GATE_2: PASS"'
+      prompt:
+        command: 'bash .supercode/workflows/atlasquant/scripts/update-plane-state.sh implement "Gate 2 PASS → Implement" 2>&1 || true; echo "Grounding OK. Proceed to Implement."'
+
+    - name: "❌ Grounding Failed"
+      if:
+        type: js
+        value: 'prompt.includes("GATE_2: FAIL") || prompt.includes("GATE_2: BLOCKED")'
+      actions:
+        - name: "🚫 Plane → Blocked"
+          prompt:
+            command: 'bash .supercode/workflows/atlasquant/scripts/update-plane-state.sh blocked "Gate 2 FAIL/BLOCKED" 2>&1 || true'
+        - name: "🏗️ Revise Plan"
+          actions:
+            - "SWE Architect"
+        - "SWE Grounding Loop"

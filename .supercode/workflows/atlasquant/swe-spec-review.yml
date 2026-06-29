@@ -48,13 +48,17 @@
       if:
         type: shell
         value: 'echo "$prompt" | grep -q "GATE_1: PASS"'
-      prompt: "Spec/plan active. Proceed to Grounding or Implement."
+      prompt:
+        command: 'bash .supercode/workflows/atlasquant/scripts/update-plane-state.sh grounding "Gate 1 PASS → Grounding" 2>&1 || true; echo "Spec/plan active. Proceed to Grounding."'
 
     - name: "❌ Revise Spec"
       if:
         type: js
         value: 'prompt.includes("GATE_1: FAIL")'
       actions:
+        - name: "🚫 Plane → Blocked"
+          prompt:
+            command: 'bash .supercode/workflows/atlasquant/scripts/update-plane-state.sh blocked "Gate 1 FAIL" 2>&1 || true'
         - name: "🏗️ Fix Spec/Plan"
           actions:
             - "SWE Architect"

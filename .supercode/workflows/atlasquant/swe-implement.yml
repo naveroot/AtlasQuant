@@ -47,12 +47,16 @@
       prompt: |
         Gate 3 PASS. Append CI evidence to .agent-run/verification-loop.md.
         Summarize changes and list files modified.
+        (Plane state stays Implement until Gate 4 PASS)
 
     - name: "❌ Fix CI (Adapt → Implement)"
       if:
         type: js
         value: 'prompt.trim() !== "" && !prompt.includes("Exit code: 0")'
       actions:
+        - name: "🚫 Plane → Blocked"
+          prompt:
+            command: 'bash .supercode/workflows/atlasquant/scripts/update-plane-state.sh blocked "Gate 3 FAIL — CI" 2>&1 || true'
         - name: "🔧 Fix Issues"
           systemPrompt:
             command: 'cat AGENTS.md'
