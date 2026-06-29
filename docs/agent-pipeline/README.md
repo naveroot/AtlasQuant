@@ -64,6 +64,12 @@ npm run setup:states   # создаёт Agent Ready, Spec Review, … в Plane
 # Скопируйте UUID из вывода в config.yml и .env
 ```
 
+Учётная запись агента (отдельный пользователь Plane для комментариев pipeline): [plane-agent-account.md](plane-agent-account.md)
+
+```bash
+npm run verify:agent   # проверка PLANE_AGENT_API_KEY через /users/me/
+```
+
 ## Быстрый старт (локально, Supercode)
 
 ### 1. Установить Supercode

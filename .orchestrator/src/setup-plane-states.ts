@@ -1,4 +1,5 @@
-import { loadConfig, requireEnv, type PlaneStateKey } from "./config.js";
+import { loadConfig, type PlaneStateKey } from "./config.js";
+import { requirePlaneAdminKey } from "./plane-auth.js";
 import {
   PlaneClient,
   type PlaneState,
@@ -72,7 +73,7 @@ async function main(): Promise<void> {
   const config = loadConfig({ requireStates: false }).plane;
   const plane = new PlaneClient(
     config.base_url,
-    requireEnv("PLANE_API_KEY"),
+    requirePlaneAdminKey(),
     config.workspace,
     config.project_id,
   );

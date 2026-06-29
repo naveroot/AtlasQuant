@@ -1,6 +1,10 @@
 import { mkdirSync, readFileSync, writeFileSync, existsSync } from "node:fs";
 import { dirname, resolve } from "node:path";
-import { loadConfig, getStateId, requireEnv } from "./config.js";
+import { loadConfig, getStateId } from "./config.js";
+import {
+  formatAgentComment,
+  resolvePlaneAgentKey,
+} from "./plane-auth.js";
 import {
   getWorkItemStateId,
   PlaneApiError,
@@ -49,7 +53,7 @@ async function pollOnce(): Promise<void> {
 
   const plane = new PlaneClient(
     config.plane.base_url,
-    requireEnv("PLANE_API_KEY"),
+    resolvePlaneAgentKey(),
     config.plane.workspace,
     config.plane.project_id,
   );
@@ -107,7 +111,7 @@ async function pollOnce(): Promise<void> {
   await plane.updateWorkItemState(issue.id, specReviewStateId);
   await plane.addComment(
     issue.id,
-    `<p>🤖 Orchestrator claimed issue → Spec Review</p>`,
+    formatAgentComment("Orchestrator", "Claimed issue → Spec Review"),
   );
 
   const exitCode = await startAgentForIssue(issue.id);
@@ -124,7 +128,10 @@ async function pollOnce(): Promise<void> {
     }
     await plane.addComment(
       issue.id,
-      `<p>⚠️ Cloud agent failed (exit ${exitCode}). State → Blocked. Check orchestrator logs.</p>`,
+      formatAgentComment(
+        "Orchestrator",
+        `Cloud agent failed (exit ${exitCode}). State → Blocked. Check orchestrator logs.`,
+      ),
     );
   }
 }

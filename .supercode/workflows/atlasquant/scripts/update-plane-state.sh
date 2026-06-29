@@ -96,13 +96,14 @@ main() {
 
   load_env
 
-  : "${PLANE_API_KEY:?PLANE_API_KEY is required}"
+  local agent_key="${PLANE_AGENT_API_KEY:-${PLANE_API_KEY:-}}"
+  : "${agent_key:?PLANE_AGENT_API_KEY or PLANE_API_KEY is required}"
   : "${PLANE_BASE_URL:=https://plane.alfapulse.ru}"
   : "${PLANE_WORKSPACE:?PLANE_WORKSPACE is required}"
   : "${PLANE_PROJECT_ID:?PLANE_PROJECT_ID is required}"
 
   API="${PLANE_BASE_URL%/}/api/v1"
-  AUTH=(-H "X-API-Key: ${PLANE_API_KEY}")
+  AUTH=(-H "X-API-Key: ${agent_key}")
 
   local state_uuid issue_id
   state_uuid=$(resolve_state_uuid "${state_key}")
@@ -117,8 +118,19 @@ main() {
   echo "Plane state → ${state_key} (${issue_id})"
 
   if [[ -n "${comment}" ]]; then
+    local role
+    role=$(python3 -c "
+roles = {
+    'spec_review': 'Spec Review',
+    'grounding': 'Grounding',
+    'implement': 'Implement',
+    'review': 'Review',
+    'blocked': 'Blocked',
+}
+print(roles.get('${state_key}', 'Pipeline'))
+")
     local comment_html
-    comment_html=$(python3 -c "import html, sys; print(f'<p>{html.escape(sys.argv[1])}</p>')" "${comment}")
+    comment_html=$(python3 -c "import html, sys; print(f'<p><strong>[{html.escape(sys.argv[1])}]</strong> {html.escape(sys.argv[2])}</p>')" "${role}" "${comment}")
     curl -sf "${AUTH[@]}" -X POST \
       -H "Content-Type: application/json" \
       -d "{\"comment_html\": $(python3 -c "import json,sys; print(json.dumps(sys.argv[1]))" "${comment_html}")}" \

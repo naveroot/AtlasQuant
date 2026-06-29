@@ -1,6 +1,10 @@
 import { Agent, CursorAgentError } from "@cursor/sdk";
 import { getStateId, loadConfig, requireEnv } from "./config.js";
 import {
+  formatAgentComment,
+  resolvePlaneAgentKey,
+} from "./plane-auth.js";
+import {
   getWorkItemStateId,
   PlaneClient,
 } from "./plane-client.js";
@@ -24,7 +28,7 @@ async function main(): Promise<void> {
   if (issueId) {
     plane = new PlaneClient(
       config.plane.base_url,
-      requireEnv("PLANE_API_KEY"),
+      resolvePlaneAgentKey(),
       config.plane.workspace,
       config.plane.project_id,
     );
@@ -40,7 +44,7 @@ async function main(): Promise<void> {
       await plane.updateWorkItemState(issue.id, specReviewStateId);
       await plane.addComment(
         issue.id,
-        `<p>🤖 Cloud agent started → Spec Review</p>`,
+        formatAgentComment("Cloud Agent", "Started → Spec Review"),
       );
     }
 
@@ -113,17 +117,23 @@ async function main(): Promise<void> {
         );
         await plane.addComment(
           planeIssueId,
-          `<p>⚠️ Cloud agent error</p><p>Agent: <code>${agent.agentId}</code></p>`,
+          formatAgentComment(
+            "Cloud Agent",
+            `Error. Agent: ${agent.agentId}`,
+          ),
         );
       } else {
         await plane.updateWorkItemState(
           planeIssueId,
           getStateId(config, "review"),
         );
-        const comment = prLink
-          ? `<p>🤖 Cloud Agent finished → Review</p><p>Agent: <code>${agent.agentId}</code></p><p>PR: <a href="${prLink}">${prLink}</a></p>`
-          : `<p>🤖 Cloud Agent finished → Review</p><p>Agent: <code>${agent.agentId}</code></p>`;
-        await plane.addComment(planeIssueId, comment);
+        const finishMessage = prLink
+          ? `Finished → Review. Agent: ${agent.agentId}. PR: ${prLink}`
+          : `Finished → Review. Agent: ${agent.agentId}`;
+        await plane.addComment(
+          planeIssueId,
+          formatAgentComment("Cloud Agent", finishMessage),
+        );
       }
     }
 
@@ -138,7 +148,7 @@ async function main(): Promise<void> {
       );
       await plane.addComment(
         planeIssueId,
-        `<p>⚠️ Cloud agent startup/runtime failure</p>`,
+        formatAgentComment("Cloud Agent", "Startup/runtime failure"),
       );
     }
 
