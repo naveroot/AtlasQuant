@@ -1,0 +1,36 @@
+# SWE Grounding — Gate 2: сверка plan с кодовой базой перед Implement
+# Запуск: после Spec Review (status: active)
+
+"SWE Grounding":
+  icon: "🧭"
+  menu: buttons
+  mode: SC:Architect
+  systemPrompt:
+    command: 'cat AGENTS.md'
+  prompt: |
+    Ты Grounding agent для AtlasQuant.
+
+    Контекст задачи:
+    $prompt
+
+    Прочитай active spec/plan в `docs/specs/` и `docs/plans/`.
+    Если status не `active` — выведи `GATE_2: BLOCKED (spec not active)` и остановись.
+
+    Сверь Implementation Plan с текущей кодовой базой:
+    1. Существующие файлы, которые plan затронет
+    2. Конфликты с AGENTS.md (MVP scope, stack)
+    3. Нереалистичные шаги или missing dependencies
+    4. Feasibility: можно ли выполнить plan минимальным diff
+
+    Обнови `.agent-run/active-context.md` (если есть) рабочими фактами.
+
+    **Если grounding OK:**
+    - Выведи `GATE_2: PASS`
+    - Список файлов для изменения
+    - Первый checkbox для Implement
+
+    **Если проблемы:**
+    - Выведи `GATE_2: FAIL`
+    - Конкретные конфликты
+    - Рекомендации: правки plan (→ Architect) или уточнение spec
+  instantRun: true

@@ -1,0 +1,61 @@
+# SWE Spec Review — Gate 1: TAUS quality gate для spec/plan
+# Запуск: после Architect, перед Implement
+
+"SWE Spec Review":
+  icon: "📋"
+  menu: buttons
+  mode: SC:Architect
+  systemPrompt:
+    command: 'cat AGENTS.md docs/specs/README.md'
+  prompt: |
+    Ты Spec Reviewer для AtlasQuant (TAUS gate).
+
+    Задача из контекста:
+    $prompt
+
+    Найди последние файлы в `docs/specs/` и `docs/plans/` (или указанные в задаче).
+
+    Проверь Spec Pack по TAUS:
+    - **T** Testable — checkbox AC с конкретным success/error поведением
+    - **A** Ambiguous-free — нет «удобно», «быстро», «и т.д.»
+    - **U** Uniform — happy path + error paths
+    - **S** Scoped — одна фича, < 1500 слов
+
+    Проверь Implementation Plan:
+    - атомарные шаги (models → services → controllers → views → tests)
+    - каждый шаг привязан к AC
+    - out-of-scope явно отмечен
+
+    **Если TAUS пройден:**
+    1. Установи `Status: active` в spec и plan
+    2. Выведи: `GATE_1: PASS` и список AC
+
+    **Если не пройден:**
+    1. Оставь `Status: draft`
+    2. Выведи: `GATE_1: FAIL` и numbered list правок (конкретно, без «улучши»)
+    3. НЕ переходи к реализации
+  instantRun: true
+
+"SWE Spec Review Loop":
+  icon: "🔄"
+  menu: buttons
+  actions:
+    - name: "📋 TAUS Review"
+      actions:
+        - "SWE Spec Review"
+
+    - name: "✓ Gate 1 Passed"
+      if:
+        type: shell
+        value: 'echo "$prompt" | grep -q "GATE_1: PASS"'
+      prompt: "Spec/plan active. Proceed to Grounding or Implement."
+
+    - name: "❌ Revise Spec"
+      if:
+        type: js
+        value: 'prompt.includes("GATE_1: FAIL")'
+      actions:
+        - name: "🏗️ Fix Spec/Plan"
+          actions:
+            - "SWE Architect"
+        - "SWE Spec Review Loop"

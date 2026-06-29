@@ -1,0 +1,66 @@
+# SWE Implement — реализация по active plan с CI loop (Ralph Loop)
+# Запуск: после Grounding (Gate 2 pass)
+
+"SWE Implement":
+  icon: "⚙️"
+  menu: buttons
+  systemPrompt:
+    command: 'cat AGENTS.md docs/index.md && test -f .agent-run/PROMPT.md && cat .agent-run/PROMPT.md || true'
+  prompt: |
+    Ты Implementer для AtlasQuant (Rails 8 MVP).
+
+    Задача:
+    $prompt
+
+    **Preconditions:**
+    - Spec/plan в docs/ должны иметь `Status: active`
+    - Если draft — STOP, нужен SWE Spec Review
+
+    **Ralph Loop rules:**
+    - Один checkbox за итерацию
+    - Обновляй `.agent-run/plan.md` и `.agent-run/active-context.md`
+    - Логируй CI в `.agent-run/verification-loop.md`
+
+    **Code rules:**
+    - Доменная логика в app/services/
+    - Минимальный diff
+    - RSpec-тесты для новых models/services (или Minitest пока миграция не завершена)
+    - AGENTS.md MVP scope + security policy
+
+    Следуй active plan в docs/plans/ пошагово.
+  instantRun: true
+  actions:
+    - "CI Must Pass"
+
+"CI Must Pass":
+  icon: "✅"
+  menu: buttons
+  actions:
+    - name: "🧪 Run CI (Gate 3)"
+      prompt:
+        command: 'bash .supercode/workflows/atlasquant/scripts/run-ci-gate.sh 2>&1; echo "Exit code: $?"'
+
+    - name: "✓ CI Passed"
+      if:
+        type: shell
+        value: 'echo "$prompt" | grep -q "Exit code: 0"'
+      prompt: |
+        Gate 3 PASS. Append CI evidence to .agent-run/verification-loop.md.
+        Summarize changes and list files modified.
+
+    - name: "❌ Fix CI (Adapt → Implement)"
+      if:
+        type: js
+        value: 'prompt.trim() !== "" && !prompt.includes("Exit code: 0")'
+      actions:
+        - name: "🔧 Fix Issues"
+          systemPrompt:
+            command: 'cat AGENTS.md'
+          prompt: |
+            Gate 3 FAIL — bin/ci failed. Adapt routing: fix implementation only.
+            Log failure in .agent-run/verification-loop.md. Minimal diff.
+
+            $prompt
+          instantRun: true
+          actions:
+            - "CI Must Pass"

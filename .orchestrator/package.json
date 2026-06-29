@@ -1,0 +1,21 @@
+{
+  "name": "atlasquant-orchestrator",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "setup:github": "bash scripts/setup-github.sh",
+    "start": "tsx --env-file=.env src/poll-plane.ts",
+    "agent": "tsx --env-file=.env src/start-agent.ts",
+    "agent:issue": "tsx --env-file=.env src/start-agent.ts --issue"
+  },
+  "dependencies": {
+    "@cursor/sdk": "^1.0.22",
+    "yaml": "^2.8.0"
+  },
+  "devDependencies": {
+    "@types/node": "^22.0.0",
+    "tsx": "^4.19.0",
+    "typescript": "^5.7.0"
+  }
+}

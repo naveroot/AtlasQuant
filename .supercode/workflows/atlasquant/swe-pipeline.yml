@@ -1,0 +1,88 @@
+# SWE Pipeline — SDD конвейер: Plane → Architect → TAUS → Grounding → Implement → Review
+# Модель quality gates из AI SWE (Spec-Driven Development)
+
+"SWE Pipeline (Plane)":
+  icon: "🚀"
+  menu: buttons
+  actions:
+    - name: "📥 Load Plane Issue"
+      prompt:
+        command: 'bash .supercode/workflows/atlasquant/scripts/fetch-plane-issue.sh'
+
+    - name: "🏗️ Architect (Brief → Spec + Plan)"
+      actions:
+        - "SWE Architect"
+
+    - name: "📋 Gate 1: TAUS Spec Review"
+      actions:
+        - "SWE Spec Review Loop"
+
+    - name: "🧭 Gate 2: Grounding"
+      actions:
+        - "SWE Grounding"
+
+    - name: "⚙️ Gate 3: Implement + CI"
+      actions:
+        - "SWE Implement"
+
+    - name: "🎯 Gate 4: Spec Conformance"
+      actions:
+        - "SWE Spec Conformance Loop"
+
+    - name: "🔍 Gate 5: Final Review + PR"
+      systemPrompt:
+        command: 'cat AGENTS.md docs/index.md'
+      prompt: |
+        Final reviewer для AtlasQuant.
+
+        $prompt
+
+        Проверь:
+        1. MVP scope — nothing out-of-scope
+        2. Security — auth, params, no secrets, brakeman clean
+        3. Evidence — каждый AC имеет file/test proof
+        4. bin/ci passed (Gate 3)
+        5. Spec conformance passed (Gate 4)
+
+        Если проблемы — минимальный fix или Adapt routing:
+        - CI issue → Implement
+        - AC gap → Implement
+        - Spec wrong → Architect + Spec Review
+
+        Если OK — PR summary:
+        - Title (conventional commit style)
+        - Body: AC checklist + evidence table + test commands run
+      instantRun: true
+
+"SWE Pipeline (Manual)":
+  icon: "📝"
+  menu: buttons
+  actions:
+    - name: "🏗️ Architect"
+      actions:
+        - "SWE Architect"
+
+    - name: "📋 Gate 1: TAUS"
+      actions:
+        - "SWE Spec Review Loop"
+
+    - name: "🧭 Gate 2: Grounding"
+      actions:
+        - "SWE Grounding"
+
+    - name: "⚙️ Implement + CI"
+      actions:
+        - "SWE Implement"
+
+    - name: "🎯 Spec Conformance"
+      actions:
+        - "SWE Spec Conformance Loop"
+
+    - name: "🔍 Final Review"
+      systemPrompt:
+        command: 'cat AGENTS.md'
+      prompt: |
+        Final review with evidence. Fix issues or write PR summary (title + body + AC table).
+
+        $prompt
+      instantRun: true

@@ -1,0 +1,18 @@
+# Orchestrator config — copy to config.yml and fill in values
+plane:
+  base_url: https://plane.alfapulse.ru
+  workspace: atlasquant
+  project_id: cc6b085f-b7bd-4d37-b740-fa5882feb4cd
+  agent_ready_label_id: ""  # UUID label "agent-ready" (см. Plane → Labels)
+  poll_interval_seconds: 300
+
+cursor:
+  model: composer-2.5
+  default_branch: main
+  auto_create_pr: true
+  skip_reviewer_request: true
+
+github:
+  repo_url: https://github.com/naveroot/AtlasQuant
+
+state_file: .orchestrator/state/processed-issues.json

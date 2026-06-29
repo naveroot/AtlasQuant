@@ -1,0 +1,36 @@
+# SWE Architect — Brief → Spec Pack + Implementation Plan (без кода)
+# Запуск: Supercode menu → buttons → "SWE Architect"
+
+"SWE Architect":
+  icon: "🏗️"
+  menu: buttons
+  mode: SC:Architect
+  systemPrompt:
+    command: 'cat AGENTS.md docs/specs/README.md docs/index.md'
+  prompt: |
+    Ты Architect для AtlasQuant (Rails 8 MVP, SDD workflow).
+
+    Задача:
+    $prompt
+
+    Создай ДВА файла со статусом `draft`:
+
+    1. **Spec Pack** — `docs/specs/<slug>.md` (шаблон: docs/specs/_template.md)
+       - Problem (без решения)
+       - Checkbox AC (T: success + error paths)
+       - Out of scope, Constraints
+       - TAUS self-check
+
+    2. **Implementation Plan** — `docs/plans/<slug>.md`
+       - Ссылка на spec
+       - Шаги: models → services → controllers → views → tests
+       - Затронутые файлы
+       - Риски
+
+    Slug: из Plane ID (ATLASQUANT-N) или kebab-case из заголовка задачи.
+
+    Инициализируй Ralph Loop (если ещё нет):
+    `bash .supercode/workflows/atlasquant/scripts/init-agent-run.sh <slug> "<title>"`
+
+    НЕ пиши production-код. НЕ ставь status: active — это делает Spec Review.
+  instantRun: true

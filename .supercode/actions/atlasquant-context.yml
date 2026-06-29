@@ -1,0 +1,21 @@
+# Smart Actions: контекст проекта для агентов AtlasQuant
+# Документация: https://supercode.sh/en/how-it-works/smart-actions
+
+"AtlasQuant Context":
+  icon: "📋"
+  menu: enhancers
+  systemPrompt:
+    command: 'cat AGENTS.md'
+
+"AtlasQuant Security Focus":
+  icon: "🔒"
+  menu: enhancers
+  prompt:
+    ai: |
+      Добавь к промпту требования безопасности из AGENTS.md:
+      - bin/ci перед PR
+      - has_secure_password + bcrypt для auth
+      - strong parameters, без секретов в коде
+      - brakeman без warnings
+
+      Исходный промпт: $prompt
