@@ -4,15 +4,16 @@ service: atlas_quant
 # ghcr.io image; __GITHUB_OWNER__ replaced in CI before deploy.
 image: ghcr.io/__GITHUB_OWNER__/atlas_quant
 
-# Deploy to TimeWeb VPS; __TWC_VPS_HOST__ replaced in CI from GitHub variable TWC_VPS_HOST.
+# Deploy to TimeWeb VPS (shared with Plane); __TWC_VPS_HOST__ replaced in CI.
+# Plane Caddy owns :80/:443 — app listens on localhost:8080 (see deploy/plane-shared/).
 servers:
   web:
-    - __TWC_VPS_HOST__
-
-# Kamal proxy + Let's Encrypt; __TWC_APP_HOST__ replaced from GitHub variable TWC_APP_HOST.
-proxy:
-  ssl: true
-  host: __TWC_APP_HOST__
+    hosts:
+      - __TWC_VPS_HOST__
+    proxy: false
+    options:
+      publish:
+        - "127.0.0.1:8080:80"
 
 registry:
   server: ghcr.io
@@ -52,7 +53,7 @@ accessories:
   db:
     image: postgres:16
     host: __TWC_VPS_HOST__
-    port: "127.0.0.1:5432:5432"
+    port: "127.0.0.1:5433:5432"
     env:
       clear:
         POSTGRES_USER: atlas_quant
