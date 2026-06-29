@@ -11,5 +11,13 @@ module ActiveSupport
     fixtures :all
 
     # Add more helper methods to be used by all tests here...
+
+    def with_stubbed_class_method(klass, method_name, implementation)
+      original = klass.method(method_name)
+      klass.define_singleton_method(method_name, &implementation)
+      yield
+    ensure
+      klass.define_singleton_method(method_name, original)
+    end
   end
 end
