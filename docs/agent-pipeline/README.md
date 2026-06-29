@@ -7,20 +7,62 @@
 ## Quality Gates
 
 ```
-Brief (Plane issue)
+Brief (Plane issue, state: Agent Ready)
     ↓
-[Gate 1] TAUS Spec Review     docs/specs/*.md → status: active
+[Gate 1] TAUS Spec Review     docs/specs/*.md → status: active  → Plane: Grounding
     ↓
-[Gate 2] Grounding            plan vs codebase
+[Gate 2] Grounding            plan vs codebase                   → Plane: Implement
     ↓
 [Gate 3] CI                   bin/ci (lint, security, tests)
     ↓
-[Gate 4] Spec Conformance     AC vs diff evidence
+[Gate 4] Spec Conformance     AC vs diff evidence                → Plane: Review
     ↓
-[Gate 5] Human PR review      GitHub
+[Gate 5] Human PR review      GitHub                             → Plane: Done (вручную)
 ```
 
 Memory Bank: [docs/index.md](../index.md)
+
+## Plane workflow statuses
+
+Pipeline синхронизирует статусы задачи в Plane на каждом gate:
+
+| Plane state | SDD этап | Триггер перехода |
+|-------------|----------|------------------|
+| **Agent Ready** | Ожидание агента | Человек переводит задачу в этот статус |
+| **Spec Review** | Architect + Gate 1 | Load Issue / poller claim |
+| **Grounding** | Gate 2 | `GATE_1: PASS` |
+| **Implement** | Gate 3 | `GATE_2: PASS` |
+| **Review** | Gate 4–5, PR | `GATE_4: PASS` / cloud agent success |
+| **Blocked** | Сбой | Любой `GATE_*: FAIL` или agent error |
+| **Done** | Завершено | Вручную после merge PR |
+
+```mermaid
+stateDiagram-v2
+    direction LR
+    Backlog --> Ready: triage
+    Ready --> SpecReview: Load Issue
+    SpecReview --> Grounding: Gate1_PASS
+    SpecReview --> Blocked: Gate1_FAIL
+    Grounding --> Implement: Gate2_PASS
+    Grounding --> Blocked: Gate2_FAIL
+    Implement --> Review: Gate4_PASS
+    Implement --> Blocked: Gate3_FAIL
+    Review --> Done: PR merged
+    Blocked --> Ready: retry
+```
+
+### Настройка статусов
+
+```bash
+cd .orchestrator
+cp config.example.yml config.yml
+cp .env.example .env
+# Заполните PLANE_API_KEY
+
+npm install
+npm run setup:states   # создаёт Agent Ready, Spec Review, … в Plane
+# Скопируйте UUID из вывода в config.yml и .env
+```
 
 ## Быстрый старт (локально, Supercode)
 
@@ -41,8 +83,9 @@ Memory Bank: [docs/index.md](../index.md)
 ### 3. Pilot с Plane
 
 1. Скопируйте `.supercode/workflows/atlasquant/.env.example` → `.env`
-2. Заполните `PLANE_API_KEY`, `PLANE_WORKSPACE`, `PLANE_PROJECT_ID`, `PLANE_ISSUE_IDENTIFIER`
-3. Supercode menu → **SWE Pipeline (Plane)**
+2. Заполните `PLANE_API_KEY`, `PLANE_WORKSPACE`, `PLANE_PROJECT_ID`, `PLANE_ISSUE_IDENTIFIER`, `PLANE_STATE_*`
+3. Переведите задачу в Plane в статус **Agent Ready**
+4. Supercode menu → **SWE Pipeline (Plane)**
 
 ## Cloud Agent (удалённое исполнение)
 
@@ -52,9 +95,10 @@ Memory Bank: [docs/index.md](../index.md)
 cd .orchestrator
 cp config.example.yml config.yml
 cp .env.example .env
-# Заполните CURSOR_API_KEY, PLANE_API_KEY, github.repo_url
+# Заполните CURSOR_API_KEY, PLANE_API_KEY, github.repo_url, plane.states.*
 
 npm install
+npm run setup:states
 ```
 
 ### 2. Pilot cloud agent (без Plane)
@@ -72,12 +116,23 @@ Cloud agent получает SDD workflow с quality gates в промпте.
 npm run agent -- --issue=<work-item-uuid>
 ```
 
-### 4. Poller (Plane label `agent-ready`)
+Переходы: `Agent Ready → Spec Review → Review|Blocked`
+
+### 4. Poller (Plane state `Agent Ready`)
 
 ```bash
-npm start              # каждые 5 мин
+npm start              # каждые 5–10 мин
 npm start -- --once    # один проход
 ```
+
+Poller ищет задачи в статусе **Agent Ready**, атомарно переводит в **Spec Review** и запускает cloud agent.
+
+## Миграция с label `agent-ready`
+
+1. Запустите `npm run setup:states`
+2. Переведите задачи из label `agent-ready` в статус **Agent Ready** в Plane UI
+3. Label можно оставить визуально — poller больше не использует его
+4. Удалите `PLANE_AGENT_READY_LABEL_ID` из `.env` (если был)
 
 ## Структура
 
@@ -101,6 +156,7 @@ docs/
 ├── swe-spec-conformance.yml          # Gate 4
 └── scripts/
     ├── fetch-plane-issue.sh
+    ├── update-plane-state.sh         # PATCH Plane state by key
     ├── init-agent-run.sh             # Ralph Loop init
     └── run-ci-gate.sh
 
@@ -110,15 +166,15 @@ docs/
 
 ## Workflow stages
 
-| Этап | Supercode | Cloud Agent |
-|------|-----------|-------------|
-| Intake | `fetch-plane-issue.sh` + `init-agent-run.sh` | `buildAgentPrompt()` |
-| Architect | SWE Architect | Phase 1 in prompt |
-| Gate 1 TAUS | SWE Spec Review Loop | Self TAUS in prompt |
-| Gate 2 Grounding | SWE Grounding | Phase 2 in prompt |
-| Gate 3 Implement | SWE Implement + CI loop | Phase 3–4 in prompt |
-| Gate 4 Conformance | SWE Spec Conformance Loop | AC evidence in prompt |
-| Gate 5 Review | Final Review step | PR with evidence table |
+| Этап | Supercode | Plane state | Cloud Agent |
+|------|-----------|-------------|-------------|
+| Intake | `fetch-plane-issue.sh` | → Spec Review | `buildAgentPrompt()` |
+| Architect | SWE Architect | Spec Review | Phase 1 in prompt |
+| Gate 1 TAUS | SWE Spec Review Loop | → Grounding / Blocked | Self TAUS in prompt |
+| Gate 2 Grounding | SWE Grounding Loop | → Implement / Blocked | Phase 2 in prompt |
+| Gate 3 Implement | SWE Implement + CI loop | Implement / Blocked | Phase 3–4 in prompt |
+| Gate 4 Conformance | SWE Spec Conformance Loop | → Review / Blocked | AC evidence in prompt |
+| Gate 5 Review | Final Review step | Review | PR with evidence table |
 
 ## Ralph Loop (длинные задачи)
 
@@ -134,12 +190,12 @@ docs/
 
 ## Adapt routing
 
-| Сбой | Вернуть на |
-|------|------------|
-| CI red | Implement |
-| Plan vs code conflict | Architect + Grounding |
-| AC not met | Implement |
-| Spec ambiguous | Architect + Spec Review |
+| Сбой | Вернуть на | Plane state |
+|------|------------|-------------|
+| CI red | Implement | Blocked → retry |
+| Plan vs code conflict | Architect + Grounding | Blocked |
+| AC not met | Implement | Blocked |
+| Spec ambiguous | Architect + Spec Review | Blocked |
 
 ## Следующие шаги
 
