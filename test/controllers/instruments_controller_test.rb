@@ -5,7 +5,7 @@ class InstrumentsControllerTest < ActionDispatch::IntegrationTest
     Rails.cache.clear
   end
 
-  test "index lists currency futures" do
+  test "index lists currency futures as cards" do
     instruments = [
       Moex::CurrencyFutures::List::Instrument.new(secid: "USDRUBF", shortname: "USDRUBF", asset_code: "USDRUBTOM")
     ]
@@ -17,6 +17,8 @@ class InstrumentsControllerTest < ActionDispatch::IntegrationTest
     assert_response :success
     assert_match "USDRUBF", response.body
     assert_match "Currency Futures", response.body
+    assert_match "View chart", response.body
+    assert_no_match "<table", response.body
   end
 
   test "index shows alert when MOEX is unavailable" do
@@ -28,7 +30,7 @@ class InstrumentsControllerTest < ActionDispatch::IntegrationTest
     assert_match "Unable to load instruments from MOEX", response.body
   end
 
-  test "show renders chart page for known instrument" do
+  test "show renders candlestick chart for known instrument" do
     instrument = Moex::CurrencyFutures::List::Instrument.new(
       secid: "USDRUBF",
       shortname: "USDRUBF",
@@ -52,7 +54,11 @@ class InstrumentsControllerTest < ActionDispatch::IntegrationTest
     assert_response :success
     assert_match "USDRUBF", response.body
     assert_match "price-chart", response.body
+    assert_match "price-chart-candles-value", response.body
     assert_match "79.19", response.body
+    assert_match "Price chart", response.body
+    assert_match "TradingView", response.body
+    assert_no_match "<table", response.body
   end
 
   test "show redirects for unknown instrument" do
