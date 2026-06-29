@@ -1,11 +1,9 @@
-# Deploy AtlasQuant to TimeWeb VPS via Kamal after CI passes on main.
-name: Deploy
+# One-time Kamal bootstrap for TimeWeb VPS (proxy, registry, PostgreSQL accessory).
+# Run manually from GitHub Actions after configuring secrets/variables.
+name: Kamal Setup
 
 on:
-  workflow_run:
-    workflows: [ "CI" ]
-    types: [ completed ]
-    branches: [ main ]
+  workflow_dispatch:
 
 concurrency:
   group: deploy-production
@@ -16,12 +14,7 @@ permissions:
   packages: write
 
 jobs:
-  deploy:
-    # Only deploy after a push to main — not after CI on pull_request.
-    if: >-
-      github.event.workflow_run.conclusion == 'success' &&
-      github.event.workflow_run.event == 'push' &&
-      github.event.workflow_run.head_branch == 'main'
+  setup:
     runs-on: ubuntu-latest
     env:
       DOCKER_BUILDKIT: 1
@@ -32,8 +25,6 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v6
-        with:
-          ref: ${{ github.event.workflow_run.head_sha }}
 
       - name: Set up Ruby
         uses: ruby/setup-ruby@v1
@@ -73,10 +64,8 @@ jobs:
       - name: Use CI Kamal secrets file
         run: cp .kamal/secrets.cd .kamal/secrets
 
-      - name: Deploy with Kamal
-        run: |
-          bin/kamal lock release || true
-          bin/kamal deploy
+      - name: Bootstrap server with Kamal
+        run: bin/kamal setup
         env:
           KAMAL_REGISTRY_USERNAME: ${{ github.actor }}
           KAMAL_REGISTRY_PASSWORD: ${{ secrets.GITHUB_TOKEN }}
