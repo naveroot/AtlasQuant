@@ -254,7 +254,7 @@ chore: обновить зависимости
 
 | Gate | Что проверяет |
 |------|---------------|
-| 1 TAUS | Spec Pack в `docs/specs/` — testable AC, без ambiguity |
+| 1 TAUS | Spec Pack в Plane Pages (`docs/specs/…`) — testable AC, без ambiguity |
 | 2 Grounding | Plan сверен с кодовой базой |
 | 3 CI | `bin/ci` — lint, security scans, tests |
 | 4 Conformance | Diff покрывает все AC из active spec |

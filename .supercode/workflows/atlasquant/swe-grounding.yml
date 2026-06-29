@@ -6,14 +6,14 @@
   menu: buttons
   mode: SC:Architect
   systemPrompt:
-    command: 'cat AGENTS.md'
+    command: 'bash .supercode/workflows/atlasquant/scripts/plane-pages-context.sh base && cat AGENTS.md'
   prompt: |
     Ты Grounding agent для AtlasQuant.
 
     Контекст задачи:
     $prompt
 
-    Прочитай active spec/plan в `docs/specs/` и `docs/plans/`.
+    Прочитай active spec/plan из **Plane Pages** (retrieve_page / plane-pages.sh get).
     Если status не `active` — выведи `GATE_2: BLOCKED (spec not active)` и остановись.
 
     Сверь Implementation Plan с текущей кодовой базой:

@@ -6,14 +6,15 @@
   menu: buttons
   mode: SC:Architect
   systemPrompt:
-    command: 'cat AGENTS.md docs/specs/README.md'
+    command: 'bash .supercode/workflows/atlasquant/scripts/plane-pages-context.sh base && cat AGENTS.md docs/plane-pages/README.md'
   prompt: |
     Ты Spec Reviewer для AtlasQuant (TAUS gate).
 
     Задача из контекста:
     $prompt
 
-    Найди последние файлы в `docs/specs/` и `docs/plans/` (или указанные в задаче).
+    Загрузи spec/plan из **Plane Pages** (`retrieve_page` или `plane-pages.sh get`).
+    См. external_id в system context / manifest.
 
     Проверь Spec Pack по TAUS:
     - **T** Testable — checkbox AC с конкретным success/error поведением
@@ -27,12 +28,13 @@
     - out-of-scope явно отмечен
 
     **Если TAUS пройден:**
-    1. Установи `Status: active` в spec и plan
+    1. Обнови Plane Pages spec и plan: `Status: active` (upsert-json или MCP)
+    2. `bash .supercode/workflows/atlasquant/scripts/plane-pages.sh pull`
     2. Запиши строку `GATE_1: PASS` в `.agent-run/gate-1.result`
     3. Выведи: `GATE_1: PASS` и список AC
 
     **Если не пройден:**
-    1. Оставь `Status: draft`
+    1. Оставь `Status: draft` в Plane Pages
     2. Запиши строку `GATE_1: FAIL` в `.agent-run/gate-1.result`
     3. Выведи: `GATE_1: FAIL` и numbered list правок (конкретно, без «улучши»)
     4. НЕ переходи к реализации

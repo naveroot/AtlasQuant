@@ -52,9 +52,9 @@ ${description}
 
 ### Phase 1 — Spec (no code)
 1. Read AGENTS.md and docs/index.md
-2. Create **Spec Pack** \`docs/specs/${slug}.md\` (status: draft, use docs/specs/_template.md)
+2. Create **Spec Pack** Plane Page \`docs/specs/${slug}.md\` (parent: specs; template: Page \`docs/specs/_template.md\`)
    - TAUS: Testable AC, Ambiguous-free, Uniform states, Scoped to one feature
-3. Create **Implementation Plan** \`docs/plans/${slug}.md\` (status: draft)
+3. Create **Implementation Plan** Plane Page \`docs/plans/${slug}.md\` (parent: plans; status: draft)
 4. Self-review spec against TAUS → set both to **status: active** only when TAUS passes
 
 ### Phase 2 — Grounding

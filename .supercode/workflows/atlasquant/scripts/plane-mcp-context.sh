@@ -89,6 +89,17 @@ Project ID: \`${PLANE_PROJECT_ID}\`
 | List states | \`list_states\` | \`project_id\` |
 
 Comments must be HTML, e.g. \`<p>Gate 1 PASS → Grounding</p>\`.
+
+## Plane Pages (Memory Bank)
+
+Spec/plan live in project **Pages** (external_source: atlasquant-docs). Manifest: \`docs/plane-pages/manifest.yml\`.
+
+| Action | Tool / CLI |
+|--------|------------|
+| Page context | \`bash .supercode/workflows/atlasquant/scripts/plane-pages-context.sh base\` |
+| Read page | \`retrieve_page\` or \`plane-pages.sh get <external_id>\` |
+| Create/upsert | \`create_page\` or \`plane-pages.sh upsert-json\` |
+| Sync cache | \`plane-pages.sh pull\` |
 EOF
 }
 

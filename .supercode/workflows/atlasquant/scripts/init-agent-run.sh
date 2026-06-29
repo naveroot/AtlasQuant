@@ -31,6 +31,7 @@ done
 
 echo ""
 echo "Ralph Loop initialized for: ${TITLE}"
-echo "Spec/plan paths (create via Architect):"
-echo "  docs/specs/${SLUG}.md"
-echo "  docs/plans/${SLUG}.md"
+echo "Plane Pages paths (create via Architect):"
+echo "  docs/specs/${SLUG}.md  (parent: specs)"
+echo "  docs/plans/${SLUG}.md  (parent: plans)"
+echo "  manifest: docs/plane-pages/manifest.yml"

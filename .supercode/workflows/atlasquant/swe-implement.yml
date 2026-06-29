@@ -5,7 +5,7 @@
   icon: "⚙️"
   menu: buttons
   systemPrompt:
-    command: 'cat AGENTS.md docs/index.md && test -f .agent-run/PROMPT.md && cat .agent-run/PROMPT.md || true'
+    command: 'bash .supercode/workflows/atlasquant/scripts/plane-pages-context.sh base && cat AGENTS.md docs/index.md && test -f .agent-run/PROMPT.md && cat .agent-run/PROMPT.md || true'
   prompt: |
     Ты Implementer для AtlasQuant (Rails 8 MVP).
 
@@ -13,7 +13,7 @@
     $prompt
 
     **Preconditions:**
-    - Spec/plan в docs/ должны иметь `Status: active`
+    - Spec/plan в Plane Pages должны иметь `Status: active`
     - Если draft — STOP, нужен SWE Spec Review
 
     **Ralph Loop rules:**
@@ -27,7 +27,7 @@
     - RSpec-тесты для новых models/services (или Minitest пока миграция не завершена)
     - AGENTS.md MVP scope + security policy
 
-    Следуй active plan в docs/plans/ пошагово.
+    Следуй active plan в Plane Pages (external_id `docs/plans/<slug>.md`) пошагово.
   instantRun: true
   actions:
     - "CI Must Pass"

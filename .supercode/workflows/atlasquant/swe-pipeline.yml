@@ -19,8 +19,10 @@
         Выведи brief для следующих этапов:
         - Заголовок, sequence slug (ATLASQUANT-N), issue UUID
         - Description (plain text)
-        - Ссылки на docs/specs/<slug>.md и docs/plans/<slug>.md
+        - Ссылки на Plane Pages spec/plan (external_id `docs/specs/<slug>.md`, `docs/plans/<slug>.md`)
         - SDD workflow steps 1–6
+
+        Перед Architect: `bash .supercode/workflows/atlasquant/scripts/plane-pages-context.sh spec-plan <slug>`
 
         Follow AGENTS.md.
       instantRun: true

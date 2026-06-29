@@ -1,5 +1,8 @@
 # AtlasQuant — Memory Bank
 
+> **Источник истины:** Plane Pages проекта ATLASQUANT ([plane-pages/README.md](plane-pages/README.md)).  
+> Локальные файлы ниже — архивные снимки на момент миграции.
+
 Двухслойный контекст для агентов (по модели AI SWE / SDD).
 
 ## Слой 1 — устойчивый контекст проекта
@@ -8,15 +11,15 @@
 |----------|------------|
 | [AGENTS.md](../AGENTS.md) | Продукт, стек, MVP scope, security policy |
 | [agent-pipeline/README.md](agent-pipeline/README.md) | Конвейер Plane → Supercode → CI → PR |
-| [specs/README.md](specs/README.md) | Формат спецификаций и TAUS quality gate |
+| [plane-pages/README.md](plane-pages/README.md) | Memory Bank в Plane Pages + manifest |
 
 ## Слой 2 — контекст изменения (per feature)
 
 | Артефакт | Путь | Статус |
 |----------|------|--------|
 | Brief | Plane issue / prompt | Plane workflow state |
-| Spec Pack | `docs/specs/<id>.md` | `draft` → `active` |
-| Implementation Plan | `docs/plans/<id>.md` | `draft` → `active` |
+| Spec Pack | Plane Page `docs/specs/<id>.md` | `draft` → `active` |
+| Implementation Plan | Plane Page `docs/plans/<id>.md` | `draft` → `active` |
 | Run state (Ralph Loop) | `.agent-run/` (gitignored) | per session |
 
 **Правило:** агент на шаге Implement получает только артефакты со статусом `active` и при Plane state **Implement** или позже.
@@ -38,7 +41,7 @@
 ## Quality Gates
 
 ```
-[Gate 1] Spec TAUS review     → docs/specs/*.md status: active
+[Gate 1] Spec TAUS review     → Plane Pages spec/plan status: active
 [Gate 2] Grounding            → plan сверен с кодовой базой
 [Gate 3] CI (bin/ci)          → lint, security, tests
 [Gate 4] Spec-conformance     → diff покрывает все AC

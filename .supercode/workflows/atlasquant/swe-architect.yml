@@ -6,30 +6,32 @@
   menu: buttons
   mode: SC:Architect
   systemPrompt:
-    command: 'cat AGENTS.md docs/specs/README.md docs/index.md'
+    command: 'bash .supercode/workflows/atlasquant/scripts/plane-pages-context.sh base && cat AGENTS.md docs/plane-pages/README.md'
   prompt: |
     Ты Architect для AtlasQuant (Rails 8 MVP, SDD workflow).
 
     Задача:
     $prompt
 
-    Создай ДВА файла со статусом `draft`:
+    Создай ДВЕ **Plane Pages** (external_id + parent, см. system context):
 
-    1. **Spec Pack** — `docs/specs/<slug>.md` (шаблон: docs/specs/_template.md)
-       - Problem (без решения)
-       - Checkbox AC (T: success + error paths)
-       - Out of scope, Constraints
-       - TAUS self-check
+    1. **Spec Pack** — external_id `docs/specs/<slug>.md`, parent `specs`
+       - Формат: docs/specs/_template.md (Page `docs/specs/_template.md`)
+       - Problem, checkbox AC, Out of scope, Constraints, TAUS self-check
+       - Status: `draft` в начале HTML (первая строка `<p><strong>Status:</strong> draft</p>`)
 
-    2. **Implementation Plan** — `docs/plans/<slug>.md`
-       - Ссылка на spec
+    2. **Implementation Plan** — external_id `docs/plans/<slug>.md`, parent `plans`
+       - Ссылка на spec page
        - Шаги: models → services → controllers → views → tests
-       - Затронутые файлы
-       - Риски
 
-    Slug: из Plane ID (ATLASQUANT-N) или kebab-case из заголовка задачи.
+    Slug: из Plane ID (ATLASQUANT-N) → external_id `docs/specs/-N.md` / `docs/plans/-N.md`.
 
-    Инициализируй Ralph Loop (если ещё нет):
+    Upsert через CLI:
+    `jq -n ... | bash .supercode/workflows/atlasquant/scripts/plane-pages.sh upsert-json`
+
+    Или через Plane MCP `create_page` (если v1 Pages API доступен).
+
+    Инициализируй Ralph Loop:
     `bash .supercode/workflows/atlasquant/scripts/init-agent-run.sh <slug> "<title>"`
 
     НЕ пиши production-код. НЕ ставь status: active — это делает Spec Review.

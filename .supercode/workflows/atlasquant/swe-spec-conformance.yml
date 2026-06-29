@@ -5,13 +5,13 @@
   icon: "🎯"
   menu: buttons
   systemPrompt:
-    command: 'cat AGENTS.md docs/specs/README.md'
+    command: 'bash .supercode/workflows/atlasquant/scripts/plane-pages-context.sh base && cat AGENTS.md docs/plane-pages/README.md'
   prompt: |
     Ты Spec Conformance Reviewer для AtlasQuant.
 
     $prompt
 
-    Прочитай active spec в `docs/specs/` и текущий diff.
+    Прочитай active spec из **Plane Pages** и текущий diff.
 
     Для каждого AC из spec:
     - [ ] Реализован? (файл/тест как evidence)

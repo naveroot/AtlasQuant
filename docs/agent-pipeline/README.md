@@ -9,7 +9,7 @@
 ```
 Brief (Plane issue, state: Agent Ready)
     ↓
-[Gate 1] TAUS Spec Review     docs/specs/*.md → status: active  → Plane: Grounding
+[Gate 1] TAUS Spec Review     Plane Pages spec/plan → status: active  → Plane: Grounding
     ↓
 [Gate 2] Grounding            plan vs codebase                   → Plane: Implement
     ↓
@@ -17,7 +17,7 @@ Brief (Plane issue, state: Agent Ready)
     ↓
 [Gate 4] Spec Conformance     AC vs diff evidence                → Plane: Review
     ↓
-[Gate 5] Human PR review      GitHub                             → Plane: Done (вручную)
+[Gate 5] Human PR review      GitHub                             → Plane: Done (авто при merge PR)
 ```
 
 Memory Bank: [docs/index.md](../index.md)
@@ -34,7 +34,7 @@ Pipeline синхронизирует статусы задачи в Plane на 
 | **Implement** | Gate 3 | `GATE_2: PASS` |
 | **Review** | Gate 4–5, PR | `GATE_4: PASS` / cloud agent success |
 | **Blocked** | Сбой | Любой `GATE_*: FAIL` или agent error |
-| **Done** | Завершено | Вручную после merge PR |
+| **Done** | Завершено | GitHub Actions при merge PR |
 
 ```mermaid
 stateDiagram-v2
@@ -47,7 +47,7 @@ stateDiagram-v2
     Grounding --> Blocked: Gate2_FAIL
     Implement --> Review: Gate4_PASS
     Implement --> Blocked: Gate3_FAIL
-    Review --> Done: PR merged
+    Review --> Done: PR merged (GitHub Actions)
     Blocked --> Ready: retry
 ```
 
@@ -159,11 +159,10 @@ Poller ищет задачи в статусе **Agent Ready**, атомарно
 
 ```
 docs/
-├── index.md                          # Memory Bank index
-├── specs/                            # Spec Pack (TAUS)
-│   ├── README.md
-│   └── _template.md
-├── plans/                            # Implementation plans
+├── plane-pages/manifest.yml          # external_id → page_id
+├── index.md                          # archived snapshot (source: Plane Page)
+├── specs/                            # archived snapshots
+├── plans/
 └── agent-pipeline/
     ├── README.md
     └── templates/agent-run/          # Ralph Loop templates
@@ -180,8 +179,11 @@ docs/
     ├── plane-mcp-context.sh          # контекст для Supercode prompts
     ├── setup-plane-mcp.sh            # генерирует .cursor/mcp.json
     ├── fetch-plane-issue.sh          # DEPRECATED fallback (REST)
-    ├── update-plane-state.sh         # DEPRECATED fallback (REST)
-    ├── init-agent-run.sh             # Ralph Loop init
+    ├── update-plane-state.sh         # REST fallback (CI + headless)
+    ├── sync-plane-on-pr-merge.sh     # GitHub Actions: PR merge → Done
+    ├── plane-pages-context.sh        # Pages external_id / MCP context
+    ├── plane-pages.sh                # Pages CLI (SSH → Django ORM)
+    ├── migrate-docs-to-plane-pages.sh
     └── run-ci-gate.sh
 
 .agent-run/                           # gitignored, per-session state
@@ -198,7 +200,7 @@ docs/
 | Gate 2 Grounding | SWE Grounding Loop | → Implement / Blocked | Phase 2 in prompt |
 | Gate 3 Implement | SWE Implement + CI loop | Implement / Blocked | Phase 3–4 in prompt |
 | Gate 4 Conformance | SWE Spec Conformance Loop | → Review / Blocked | AC evidence in prompt |
-| Gate 5 Review | Final Review step | Review | PR with evidence table |
+| Gate 5 Human | GitHub PR review → merge | Done (GitHub Actions) | — |
 
 ## Ralph Loop (длинные задачи)
 
@@ -221,9 +223,52 @@ docs/
 | AC not met | Implement | Blocked |
 | Spec ambiguous | Architect + Spec Review | Blocked |
 
+## GitHub Actions: Plane sync при merge PR
+
+Workflow `.github/workflows/sync-plane-status.yml` срабатывает при **merged** pull request и переводит связанные задачи Plane в **Done**.
+
+### Как связать PR с задачей
+
+Идентификатор `ATLASQUANT-N` ищется в (в любом порядке):
+
+- имени ветки — `feature/ATLASQUANT-12-user-auth`
+- заголовке PR — `[ATLASQUANT-12] feat: …`
+- теле PR — `Plane: ATLASQUANT-12`
+
+Несколько идентификаторов в одном PR обрабатываются все.
+
+### Secrets в GitHub (Settings → Secrets and variables → Actions)
+
+| Secret | Пример |
+|--------|--------|
+| `PLANE_API_KEY` | API key из Plane |
+| `PLANE_BASE_URL` | `https://plane.alfapulse.ru` |
+| `PLANE_WORKSPACE` | `atlasquant` |
+| `PLANE_PROJECT_ID` | UUID проекта |
+| `PLANE_STATE_DONE` | UUID статуса Done |
+
+Опционально **variable** `PLANE_PROJECT_PREFIX` (по умолчанию `ATLASQUANT`).
+
+Значения UUID — из `.supercode/workflows/atlasquant/.env` или `npm run setup:states` в `.orchestrator/`.
+
+### Локальная проверка (dry-run)
+
+```bash
+PR_BRANCH=feature/ATLASQUANT-1-auth \
+PR_TITLE="feat: sessions" \
+PR_URL=https://github.com/naveroot/AtlasQuant/pull/1 \
+PLANE_DRY_RUN=1 \
+bash .supercode/workflows/atlasquant/scripts/sync-plane-on-pr-merge.sh
+```
+
+### Webhook (альтернатива)
+
+Для self-hosted webhook вместо Actions можно вызвать тот же скрипт из endpoint'а, передав `PR_BRANCH`, `PR_TITLE`, `PR_BODY`, `PR_URL` из payload GitHub `pull_request` (action `closed`, `merged: true`).
+
 ## Следующие шаги
 
 - [ ] Push на GitHub → `GITHUB_REPO_URL` в config.yml
+- [ ] Добавить GitHub Actions secrets для Plane sync
 - [ ] Pilot: **SWE Pipeline (Manual)** на User auth
 - [ ] Cloud smoke: `mise run orchestrator:agent -- --pilot`
 - [ ] Запустить poller как systemd/cron service
