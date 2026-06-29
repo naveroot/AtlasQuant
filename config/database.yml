@@ -89,6 +89,7 @@ production:
     <<: *default
     database: atlas_quant_production
     username: atlas_quant
+    host: <%= ENV.fetch("DB_HOST", "localhost") %>
     password: <%= ENV["ATLAS_QUANT_DATABASE_PASSWORD"] %>
   cache:
     <<: *primary_production
