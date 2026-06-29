@@ -1,23 +1,27 @@
 import { mkdirSync, readFileSync, writeFileSync, existsSync } from "node:fs";
 import { dirname, resolve } from "node:path";
-import { loadConfig, requireEnv } from "./config.js";
-import { PlaneClient } from "./plane-client.js";
+import { loadConfig, getStateId, requireEnv } from "./config.js";
+import {
+  getWorkItemStateId,
+  PlaneApiError,
+  PlaneClient,
+} from "./plane-client.js";
 import { spawn } from "node:child_process";
 import { fileURLToPath } from "node:url";
 
-interface ProcessedState {
-  processed: string[];
+interface FailedDispatchState {
+  failed: string[];
 }
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const REPO_ROOT = resolve(__dirname, "..", "..");
 
-function loadState(path: string): ProcessedState {
-  if (!existsSync(path)) return { processed: [] };
-  return JSON.parse(readFileSync(path, "utf8")) as ProcessedState;
+function loadFailedState(path: string): FailedDispatchState {
+  if (!existsSync(path)) return { failed: [] };
+  return JSON.parse(readFileSync(path, "utf8")) as FailedDispatchState;
 }
 
-function saveState(path: string, state: ProcessedState): void {
+function saveFailedState(path: string, state: FailedDispatchState): void {
   mkdirSync(dirname(path), { recursive: true });
   writeFileSync(path, JSON.stringify(state, null, 2));
 }
@@ -41,7 +45,7 @@ function startAgentForIssue(issueId: string): Promise<number> {
 async function pollOnce(): Promise<void> {
   const config = loadConfig();
   const statePath = resolve(REPO_ROOT, config.state_file);
-  const state = loadState(statePath);
+  const failedState = loadFailedState(statePath);
 
   const plane = new PlaneClient(
     config.plane.base_url,
@@ -50,32 +54,46 @@ async function pollOnce(): Promise<void> {
     config.plane.project_id,
   );
 
-  const items = await plane.listWorkItems();
-  const ready = plane.filterAgentReady(items, config.plane.agent_ready_label_id);
+  const readyStateId = getStateId(config, "ready");
+  const specReviewStateId = getStateId(config, "spec_review");
+  const blockedStateId = getStateId(config, "blocked");
 
-  const pending = ready.filter((item) => !state.processed.includes(item.id));
+  const items = await plane.listWorkItems();
+  const ready = plane.filterByState(items, readyStateId);
+
+  const pending = ready.filter((item) => !failedState.failed.includes(item.id));
 
   if (pending.length === 0) {
-    console.log(`[${new Date().toISOString()}] No new agent-ready issues`);
+    console.log(`[${new Date().toISOString()}] No issues in Agent Ready state`);
     return;
   }
 
   const issue = pending[0];
-  console.log(`[${new Date().toISOString()}] Processing: ${issue.name} (${issue.id})`);
+  console.log(
+    `[${new Date().toISOString()}] Claiming: ${issue.name} (${issue.id})`,
+  );
+
+  await plane.updateWorkItemState(issue.id, specReviewStateId);
+  await plane.addComment(
+    issue.id,
+    `<p>🤖 Orchestrator claimed issue → Spec Review</p>`,
+  );
 
   const exitCode = await startAgentForIssue(issue.id);
 
   if (exitCode === 0) {
-    state.processed.push(issue.id);
-    saveState(statePath, state);
-    await plane.addComment(
-      issue.id,
-      `<p>🤖 Orchestrator dispatched cloud agent (exit 0)</p>`,
-    );
+    console.log(`[${new Date().toISOString()}] Agent finished for ${issue.id}`);
   } else {
+    failedState.failed.push(issue.id);
+    saveFailedState(statePath, failedState);
+
+    const currentState = getWorkItemStateId(await plane.getWorkItem(issue.id));
+    if (currentState !== blockedStateId) {
+      await plane.updateWorkItemState(issue.id, blockedStateId);
+    }
     await plane.addComment(
       issue.id,
-      `<p>⚠️ Cloud agent failed (exit ${exitCode}). Check orchestrator logs.</p>`,
+      `<p>⚠️ Cloud agent failed (exit ${exitCode}). State → Blocked. Check orchestrator logs.</p>`,
     );
   }
 }
@@ -85,12 +103,24 @@ async function main(): Promise<void> {
   const once = process.argv.includes("--once");
 
   console.log(`Plane poller started (interval: ${config.plane.poll_interval_seconds}s)`);
+  console.log(`Trigger state: ready (${getStateId(config, "ready")})`);
 
   do {
     try {
       await pollOnce();
     } catch (err) {
-      console.error("Poll error:", err);
+      if (err instanceof PlaneApiError && err.isRateLimited) {
+        const waitSec = err.retryAfterSeconds ?? 60;
+        console.error(
+          `Plane rate limit exceeded. Wait ~${waitSec}s before retry, or dispatch directly:\n` +
+            `  npm run agent -- --issue=<work-item-uuid>`,
+        );
+        if (!once) {
+          await new Promise((r) => setTimeout(r, waitSec * 1000));
+        }
+      } else {
+        console.error("Poll error:", err);
+      }
     }
 
     if (!once) {

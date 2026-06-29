@@ -3,8 +3,17 @@ plane:
   base_url: https://plane.alfapulse.ru
   workspace: atlasquant
   project_id: cc6b085f-b7bd-4d37-b740-fa5882feb4cd
-  agent_ready_label_id: ""  # UUID label "agent-ready" (см. Plane → Labels)
-  poll_interval_seconds: 300
+  poll_interval_seconds: 600  # 10 min — Plane CE rate-limits aggressive polling
+  # Run: npm run setup:states — then paste UUIDs below (or use printed values)
+  states:
+    ready: "26d5fd32-cb92-4049-9831-8bbc384c8584"
+    spec_review: "44f20105-30d2-43ee-86f4-eb1f71c141f0"
+    grounding: "d8fff936-50c1-4d63-bdf0-cf40e8aad4a9"
+    implement: "9e43a128-dbe2-411d-aa80-1767fb77eec7"
+    review: "560d57d9-9771-43f9-aa71-35024148d4a9"
+    done: "6868c2c3-0b29-493d-b275-2a8e37ae82e9"
+    blocked: "c95954fa-5e7f-4afb-8a8a-56d0cd279deb"
+    cancelled: "bfab04f0-7b0b-4f3c-86e9-aa75590cf9bf"
 
 cursor:
   model: composer-2.5
