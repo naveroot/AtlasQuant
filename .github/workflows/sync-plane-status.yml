@@ -1,0 +1,29 @@
+# After a merged PR, move linked Plane work items (ATLASQUANT-N) to Done.
+# Requires repository secrets — see docs/agent-pipeline/README.md#github-actions-plane-sync
+name: Sync Plane status on PR merge
+
+on:
+  pull_request:
+    types: [closed]
+
+jobs:
+  sync-plane:
+    if: github.event.pull_request.merged == true
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Sync Plane work items to Done
+        env:
+          PLANE_API_KEY: ${{ secrets.PLANE_API_KEY }}
+          PLANE_BASE_URL: ${{ secrets.PLANE_BASE_URL }}
+          PLANE_WORKSPACE: ${{ secrets.PLANE_WORKSPACE }}
+          PLANE_PROJECT_ID: ${{ secrets.PLANE_PROJECT_ID }}
+          PLANE_STATE_DONE: ${{ secrets.PLANE_STATE_DONE }}
+          PLANE_PROJECT_PREFIX: ${{ vars.PLANE_PROJECT_PREFIX }}
+          PR_BRANCH: ${{ github.head_ref }}
+          PR_TITLE: ${{ github.event.pull_request.title }}
+          PR_BODY: ${{ github.event.pull_request.body }}
+          PR_URL: ${{ github.event.pull_request.html_url }}
+        run: bash .supercode/workflows/atlasquant/scripts/sync-plane-on-pr-merge.sh

@@ -2,6 +2,11 @@
 
 <!-- Кратко: что и зачем -->
 
+## Plane
+
+<!-- Идентификатор задачи — для авто-sync в Done при merge PR (GitHub Actions) -->
+Plane: ATLASQUANT-
+
 ## Spec
 
 - Spec: `docs/specs/…`
