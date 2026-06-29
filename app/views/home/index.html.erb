@@ -1,0 +1,13 @@
+<div class="w-full max-w-2xl mx-auto text-center">
+  <h1 class="text-4xl font-bold text-gray-900 mb-4">Atlas Quant</h1>
+  <p class="text-lg text-gray-600 mb-8">Your quantitative trading dashboard.</p>
+
+  <% if logged_in? %>
+    <p class="text-gray-700">Signed in as <span class="font-medium"><%= current_user.email %></span></p>
+  <% else %>
+    <div class="flex gap-4 justify-center">
+      <%= link_to "Sign in", new_session_path, class: "rounded-lg bg-blue-600 px-6 py-2 text-white font-medium hover:bg-blue-700" %>
+      <%= link_to "Sign up", new_registration_path, class: "rounded-lg border border-gray-300 px-6 py-2 text-gray-700 font-medium hover:bg-gray-50" %>
+    </div>
+  <% end %>
+</div>
