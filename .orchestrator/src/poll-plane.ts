@@ -25,8 +25,8 @@ function saveState(path: string, state: ProcessedState): void {
 function startAgentForIssue(issueId: string): Promise<number> {
   return new Promise((resolveExit, reject) => {
     const child = spawn(
-      "npx",
-      ["tsx", "--env-file=.env", "src/start-agent.ts", `--issue=${issueId}`],
+      "mise",
+      ["exec", "--", "npm", "run", "agent", "--", `--issue=${issueId}`],
       {
         cwd: resolve(REPO_ROOT, ".orchestrator"),
         stdio: "inherit",
@@ -54,6 +54,10 @@ async function pollOnce(): Promise<void> {
   const ready = plane.filterAgentReady(items, config.plane.agent_ready_label_id);
 
   const pending = ready.filter((item) => !state.processed.includes(item.id));
+
+  console.log(
+    `[${new Date().toISOString()}] Plane: ${items.length} issues, ${ready.length} agent-ready, ${pending.length} pending`,
+  );
 
   if (pending.length === 0) {
     console.log(`[${new Date().toISOString()}] No new agent-ready issues`);

@@ -3,8 +3,11 @@ plane:
   base_url: https://plane.alfapulse.ru
   workspace: atlasquant
   project_id: cc6b085f-b7bd-4d37-b740-fa5882feb4cd
-  agent_ready_label_id: ""  # UUID label "agent-ready" (см. Plane → Labels)
+  agent_ready_label_id: ""  # UUID label "agent-ready" (см. Plane → Labels или PLANE_AGENT_READY_LABEL_ID)
   poll_interval_seconds: 300
+  # Optional workflow states (for reference / future filters):
+  # states:
+  #   ready: ""
 
 cursor:
   model: composer-2.5

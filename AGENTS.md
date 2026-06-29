@@ -102,6 +102,7 @@ open coverage/index.html   # отчёт SimpleCov
 [tools]
 ruby = "3.2.11"
 postgres = "16"
+node = "22"
 ```
 
 **Команды:**
@@ -110,6 +111,7 @@ postgres = "16"
 mise install
 mise exec -- bin/setup
 mise exec -- bin/dev
+mise run orchestrator:once   # Plane poller (один проход)
 ```
 
 ### Команды разработки

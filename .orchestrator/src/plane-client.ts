@@ -37,7 +37,12 @@ export class PlaneClient {
     return `${this.baseUrl.replace(/\/$/, "")}/api/v1${path}`;
   }
 
-  private async request<T>(path: string, init?: RequestInit): Promise<T> {
+  private async request<T>(
+    path: string,
+    init?: RequestInit,
+    attempt = 1,
+  ): Promise<T> {
+    const maxAttempts = 5;
     const response = await fetch(this.api(path), {
       ...init,
       headers: {
@@ -46,6 +51,19 @@ export class PlaneClient {
         ...init?.headers,
       },
     });
+
+    if (response.status === 429 && attempt < maxAttempts) {
+      const retryAfterHeader = response.headers.get("Retry-After");
+      const retrySeconds = retryAfterHeader
+        ? Number.parseInt(retryAfterHeader, 10)
+        : 30;
+      const waitMs = (Number.isFinite(retrySeconds) ? retrySeconds : 30) * 1000;
+      console.log(
+        `Plane rate limit (429), retry in ${Math.ceil(waitMs / 1000)}s (attempt ${attempt}/${maxAttempts})`,
+      );
+      await new Promise((resolve) => setTimeout(resolve, waitMs));
+      return this.request(path, init, attempt + 1);
+    }
 
     if (!response.ok) {
       const body = await response.text();
@@ -58,18 +76,24 @@ export class PlaneClient {
   async listWorkItems(expand = "labels,state"): Promise<PlaneWorkItem[]> {
     const items: PlaneWorkItem[] = [];
     let cursor: string | undefined;
+    const perPage = 100;
 
     do {
-      const params = new URLSearchParams({ expand, per_page: "100" });
+      const params = new URLSearchParams({ expand, per_page: String(perPage) });
       if (cursor) params.set("cursor", cursor);
 
       const page = await this.request<PlaneWorkItemList>(
         `/workspaces/${this.workspace}/projects/${this.projectId}/work-items/?${params}`,
       );
 
-      items.push(...(page.results ?? []));
+      const batch = page.results ?? [];
+      items.push(...batch);
+
+      // Plane always returns next_cursor even on the last page — stop when the page is short.
+      if (batch.length < perPage) break;
       cursor = page.next_cursor;
-    } while (cursor);
+      if (!cursor) break;
+    } while (true);
 
     return items;
   }
