@@ -1,0 +1,9 @@
+<% if logged_in? %>
+  <% if @favorite_secids.include?(instrument.secid) %>
+    <%= button_to "Remove from favorites", favorite_path(instrument.secid), method: :delete,
+          class: "text-sm font-medium text-amber-700 hover:text-amber-800 cursor-pointer" %>
+  <% else %>
+    <%= button_to "Add to favorites", favorites_path, params: { secid: instrument.secid }, method: :post,
+          class: "text-sm font-medium text-blue-600 hover:text-blue-700 cursor-pointer" %>
+  <% end %>
+<% end %>

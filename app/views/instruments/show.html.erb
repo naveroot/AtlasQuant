@@ -9,6 +9,11 @@
     <div>
       <h1 class="text-3xl font-bold text-gray-900"><%= @instrument.secid %></h1>
       <p class="mt-1 text-gray-600"><%= @instrument.shortname %> · <%= @instrument.asset_code %></p>
+      <% if logged_in? %>
+        <div class="mt-3">
+          <%= render "favorite_toggle", instrument: @instrument %>
+        </div>
+      <% end %>
     </div>
 
     <%= form_with url: instrument_path(@instrument.secid), method: :get, local: true, class: "flex flex-wrap items-end gap-3" do |form| %>

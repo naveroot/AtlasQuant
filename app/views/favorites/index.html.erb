@@ -1,10 +1,10 @@
 <div class="w-full max-w-5xl mx-auto">
   <div class="mb-8">
-    <h1 class="text-3xl font-bold text-gray-900">Currency Futures</h1>
-    <p class="mt-2 text-gray-600">MOEX FORTS — delayed quotes via ISS API</p>
+    <h1 class="text-3xl font-bold text-gray-900">Favorites</h1>
+    <p class="mt-2 text-gray-600">Your saved MOEX currency futures</p>
   </div>
 
-  <% if @instruments.any? %>
+  <% if @favorites.any? %>
     <div class="overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm">
       <table class="min-w-full divide-y divide-gray-200">
         <thead class="bg-gray-50">
@@ -13,25 +13,21 @@
             <th class="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wide text-gray-500">Name</th>
             <th class="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wide text-gray-500">Asset</th>
             <th class="px-6 py-3 text-right text-xs font-semibold uppercase tracking-wide text-gray-500"></th>
-            <% if logged_in? %>
-              <th class="px-6 py-3 text-right text-xs font-semibold uppercase tracking-wide text-gray-500">Favorite</th>
-            <% end %>
           </tr>
         </thead>
         <tbody class="divide-y divide-gray-100">
-          <% @instruments.each do |instrument| %>
+          <% @favorites.each do |instrument| %>
             <tr class="hover:bg-gray-50">
               <td class="px-6 py-4 font-mono text-sm font-medium text-gray-900"><%= instrument.secid %></td>
               <td class="px-6 py-4 text-sm text-gray-700"><%= instrument.shortname %></td>
               <td class="px-6 py-4 text-sm text-gray-500"><%= instrument.asset_code %></td>
               <td class="px-6 py-4 text-right">
-                <%= link_to "Chart", instrument_path(instrument.secid), class: "text-sm font-medium text-blue-600 hover:text-blue-700" %>
+                <div class="flex items-center justify-end gap-3">
+                  <%= link_to "Chart", instrument_path(instrument.secid), class: "text-sm font-medium text-blue-600 hover:text-blue-700" %>
+                  <%= button_to "Remove", favorite_path(instrument.secid), method: :delete,
+                        class: "text-sm font-medium text-red-600 hover:text-red-700 cursor-pointer" %>
+                </div>
               </td>
-              <% if logged_in? %>
-                <td class="px-6 py-4 text-right">
-                  <%= render "favorite_toggle", instrument: instrument %>
-                </td>
-              <% end %>
             </tr>
           <% end %>
         </tbody>
@@ -39,7 +35,8 @@
     </div>
   <% else %>
     <div class="rounded-xl border border-gray-200 bg-white px-6 py-12 text-center text-gray-600">
-      No currency futures available.
+      No favorites yet.
+      <%= link_to "Browse instruments", instruments_path, class: "ml-1 font-medium text-blue-600 hover:text-blue-700" %>
     </div>
   <% end %>
 </div>

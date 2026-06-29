@@ -6,5 +6,7 @@ Rails.application.routes.draw do
 
   resources :instruments, only: %i[index show], param: :secid
 
+  resources :favorites, only: %i[index create destroy], param: :secid
+
   root "home#index"
 end
