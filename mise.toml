@@ -31,3 +31,11 @@ run = "npm run agent"
 [tasks."plane-mcp:setup"]
 description = "Generate .cursor/mcp.json for self-hosted Plane MCP (stdio)"
 run = "bash .supercode/workflows/atlasquant/scripts/setup-plane-mcp.sh"
+
+[tasks."plane-pages:migrate"]
+description = "Migrate docs/ to Plane Pages and update manifest"
+run = "bash .supercode/workflows/atlasquant/scripts/migrate-docs-to-plane-pages.sh --write-manifest"
+
+[tasks."plane-pages:pull"]
+description = "Sync Plane Pages to .plane-pages/cache/"
+run = "bash .supercode/workflows/atlasquant/scripts/plane-pages.sh pull"

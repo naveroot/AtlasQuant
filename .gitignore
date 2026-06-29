@@ -15,6 +15,7 @@
 /.orchestrator/node_modules/
 /.orchestrator/state/
 /.agent-run/
+/.plane-pages/cache/
 
 # Ignore all logfiles and tempfiles.
 /log/*
