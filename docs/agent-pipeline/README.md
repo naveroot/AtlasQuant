@@ -97,7 +97,8 @@ cp config.example.yml config.yml
 cp .env.example .env
 # Заполните CURSOR_API_KEY, PLANE_API_KEY, github.repo_url, plane.states.*
 
-npm install
+mise install
+mise run orchestrator:install
 npm run setup:states
 ```
 
@@ -105,7 +106,7 @@ npm run setup:states
 
 ```bash
 export CURSOR_API_KEY=cursor_...
-npm run agent -- --pilot
+mise run orchestrator:agent -- --pilot
 ```
 
 Cloud agent получает SDD workflow с quality gates в промпте.
@@ -113,7 +114,7 @@ Cloud agent получает SDD workflow с quality gates в промпте.
 ### 3. Cloud agent для задачи Plane
 
 ```bash
-npm run agent -- --issue=<work-item-uuid>
+mise run orchestrator:agent -- --issue=<work-item-uuid>
 ```
 
 Переходы: `Agent Ready → Spec Review → Review|Blocked`
@@ -121,8 +122,8 @@ npm run agent -- --issue=<work-item-uuid>
 ### 4. Poller (Plane state `Agent Ready`)
 
 ```bash
-npm start              # каждые 5–10 мин
-npm start -- --once    # один проход
+mise run orchestrator:start        # каждые 5–10 мин
+mise run orchestrator:once         # один проход
 ```
 
 Poller ищет задачи в статусе **Agent Ready**, атомарно переводит в **Spec Review** и запускает cloud agent.
@@ -201,5 +202,5 @@ docs/
 
 - [ ] Push на GitHub → `GITHUB_REPO_URL` в config.yml
 - [ ] Pilot: **SWE Pipeline (Manual)** на User auth
-- [ ] Cloud smoke: `npm run agent -- --pilot`
+- [ ] Cloud smoke: `mise run orchestrator:agent -- --pilot`
 - [ ] Запустить poller как systemd/cron service

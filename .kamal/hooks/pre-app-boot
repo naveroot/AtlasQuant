@@ -1,0 +1,10 @@
+#!/usr/bin/env sh
+# Stop the running web container before booting a new one (proxy disabled, fixed host port).
+set -eu
+
+for host in $(echo "$KAMAL_HOSTS" | tr ',' ' '); do
+  echo "Stopping atlas_quant web containers on ${host}..."
+  ssh "root@${host}" \
+    'docker ps -q --filter "label=service=atlas_quant" --filter "label=role=web" | xargs -r docker stop -t 30' \
+    || true
+done

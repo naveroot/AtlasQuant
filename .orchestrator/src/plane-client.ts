@@ -154,18 +154,24 @@ export class PlaneClient {
   async listWorkItems(expand = "labels,state"): Promise<PlaneWorkItem[]> {
     const items: PlaneWorkItem[] = [];
     let cursor: string | undefined;
+    const perPage = 100;
 
     do {
-      const params = new URLSearchParams({ expand, per_page: "100" });
+      const params = new URLSearchParams({ expand, per_page: String(perPage) });
       if (cursor) params.set("cursor", cursor);
 
       const page = await this.request<PlaneWorkItemList>(
         `/workspaces/${this.workspace}/projects/${this.projectId}/work-items/?${params}`,
       );
 
-      items.push(...(page.results ?? []));
+      const batch = page.results ?? [];
+      items.push(...batch);
+
+      // Plane always returns next_cursor even on the last page — stop when the page is short.
+      if (batch.length < perPage) break;
       cursor = page.next_cursor;
-    } while (cursor);
+      if (!cursor) break;
+    } while (true);
 
     return items;
   }

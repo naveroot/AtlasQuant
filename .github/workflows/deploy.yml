@@ -1,0 +1,83 @@
+# Deploy AtlasQuant to TimeWeb VPS via Kamal after CI passes on main.
+name: Deploy
+
+on:
+  workflow_run:
+    workflows: [ "CI" ]
+    types: [ completed ]
+    branches: [ main ]
+
+concurrency:
+  group: deploy-production
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+  packages: write
+
+jobs:
+  deploy:
+    # Only deploy after a push to main — not after CI on pull_request.
+    if: >-
+      github.event.workflow_run.conclusion == 'success' &&
+      github.event.workflow_run.event == 'push' &&
+      github.event.workflow_run.head_branch == 'main'
+    runs-on: ubuntu-latest
+    env:
+      DOCKER_BUILDKIT: 1
+      RAILS_ENV: production
+      BUNDLE_WITHOUT: "development:test"
+      BUNDLE_WITH: tools
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v6
+        with:
+          ref: ${{ github.event.workflow_run.head_sha }}
+
+      - name: Set up Ruby
+        uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: .ruby-version
+          bundler-cache: true
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Configure Kamal deploy targets
+        env:
+          TWC_VPS_HOST: ${{ vars.TWC_VPS_HOST }}
+          TWC_APP_HOST: ${{ vars.TWC_APP_HOST }}
+          GITHUB_OWNER: ${{ github.repository_owner }}
+        run: |
+          if [ -z "$TWC_VPS_HOST" ]; then
+            echo "TWC_VPS_HOST repository variable is required." >&2
+            exit 1
+          fi
+          sed -i "s|__TWC_VPS_HOST__|${TWC_VPS_HOST}|g" config/deploy.yml
+          sed -i "s|__GITHUB_OWNER__|${GITHUB_OWNER}|g" config/deploy.yml
+
+      - name: Set up SSH for Kamal
+        env:
+          SSH_PRIVATE_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
+          TWC_VPS_HOST: ${{ vars.TWC_VPS_HOST }}
+        run: |
+          mkdir -p ~/.ssh
+          echo "$SSH_PRIVATE_KEY" > ~/.ssh/id_ed25519
+          chmod 600 ~/.ssh/id_ed25519
+          eval "$(ssh-agent -s)"
+          ssh-add ~/.ssh/id_ed25519
+          ssh-keyscan -H "$TWC_VPS_HOST" >> ~/.ssh/known_hosts
+
+      - name: Use CI Kamal secrets file
+        run: cp .kamal/secrets.cd .kamal/secrets
+
+      - name: Deploy with Kamal
+        run: |
+          bin/kamal lock release || true
+          bin/kamal deploy
+        env:
+          KAMAL_REGISTRY_USERNAME: ${{ github.actor }}
+          KAMAL_REGISTRY_PASSWORD: ${{ secrets.GITHUB_TOKEN }}
+          RAILS_MASTER_KEY: ${{ secrets.RAILS_MASTER_KEY }}
+          ATLAS_QUANT_DATABASE_PASSWORD: ${{ secrets.ATLAS_QUANT_DATABASE_PASSWORD }}

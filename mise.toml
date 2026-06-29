@@ -1,4 +1,28 @@
 [tools]
 ruby = "3.2.11"
 postgres = "16"
+node = "22"
 "github:cli/cli" = "2.89.0"
+
+[tasks."orchestrator:install"]
+description = "Install orchestrator npm dependencies"
+dir = ".orchestrator"
+run = "npm install"
+
+[tasks."orchestrator:start"]
+description = "Poll Plane for agent-ready issues (every 5 min)"
+depends = ["orchestrator:install"]
+dir = ".orchestrator"
+run = "npm start"
+
+[tasks."orchestrator:once"]
+description = "Poll Plane once for agent-ready issues"
+depends = ["orchestrator:install"]
+dir = ".orchestrator"
+run = "npm start -- --once"
+
+[tasks."orchestrator:agent"]
+description = "Start cloud agent for a Plane issue (pass -- --issue=<uuid>)"
+depends = ["orchestrator:install"]
+dir = ".orchestrator"
+run = "npm run agent"
