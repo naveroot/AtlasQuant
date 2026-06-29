@@ -1,0 +1,4 @@
+[tools]
+ruby = "3.2.11"
+postgres = "16"
+"github:cli/cli" = "2.89.0"
