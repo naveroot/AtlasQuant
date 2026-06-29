@@ -1,11 +1,14 @@
 # Name of your application. Used to uniquely configure containers.
 service: atlas_quant
 
-# ghcr.io image; __GITHUB_OWNER__ replaced in CI before deploy.
-image: ghcr.io/__GITHUB_OWNER__/atlas_quant
+# Image on ghcr.io (registry.server below); __GITHUB_OWNER__ replaced in CI.
+image: __GITHUB_OWNER__/atlas_quant
 
 # Deploy to TimeWeb VPS (shared with Plane); __TWC_VPS_HOST__ replaced in CI.
 # Plane Caddy owns :80/:443 — app listens on localhost:8080 (see deploy/plane-shared/).
+ssh:
+  user: root
+
 servers:
   web:
     hosts:

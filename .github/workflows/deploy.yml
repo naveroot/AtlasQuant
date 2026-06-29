@@ -62,12 +62,17 @@ jobs:
           SSH_PRIVATE_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
           TWC_VPS_HOST: ${{ vars.TWC_VPS_HOST }}
         run: |
+          if [ -z "$SSH_PRIVATE_KEY" ]; then
+            echo "SSH_PRIVATE_KEY secret is empty — add the private key matching the VPS authorized_keys." >&2
+            exit 1
+          fi
           mkdir -p ~/.ssh
           echo "$SSH_PRIVATE_KEY" > ~/.ssh/id_ed25519
           chmod 600 ~/.ssh/id_ed25519
           eval "$(ssh-agent -s)"
           ssh-add ~/.ssh/id_ed25519
           ssh-keyscan -H "$TWC_VPS_HOST" >> ~/.ssh/known_hosts
+          ssh -o BatchMode=yes -o ConnectTimeout=15 "root@${TWC_VPS_HOST}" "echo SSH OK"
 
       - name: Use CI Kamal secrets file
         run: cp .kamal/secrets.cd .kamal/secrets
