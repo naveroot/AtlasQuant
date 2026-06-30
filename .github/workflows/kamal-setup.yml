@@ -35,16 +35,19 @@ jobs:
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
 
+      - name: Validate Kamal deploy inputs
+        env:
+          SSH_PRIVATE_KEY: ${{ secrets.SSH_PRIVATE_KEY || secrets.KAMAL_SSH_PRIVATE_KEY }}
+          TWC_VPS_HOST: ${{ vars.TWC_VPS_HOST }}
+          RAILS_MASTER_KEY: ${{ secrets.RAILS_MASTER_KEY }}
+          ATLAS_QUANT_DATABASE_PASSWORD: ${{ secrets.ATLAS_QUANT_DATABASE_PASSWORD }}
+        run: .github/scripts/validate-kamal-env.sh
+
       - name: Configure Kamal deploy targets
         env:
           TWC_VPS_HOST: ${{ vars.TWC_VPS_HOST }}
-          TWC_APP_HOST: ${{ vars.TWC_APP_HOST }}
           GITHUB_OWNER: ${{ github.repository_owner }}
         run: |
-          if [ -z "$TWC_VPS_HOST" ]; then
-            echo "TWC_VPS_HOST repository variable is required." >&2
-            exit 1
-          fi
           sed -i "s|__TWC_VPS_HOST__|${TWC_VPS_HOST}|g" config/deploy.yml
           sed -i "s|__GITHUB_OWNER__|${GITHUB_OWNER}|g" config/deploy.yml
 
@@ -52,18 +55,7 @@ jobs:
         env:
           SSH_PRIVATE_KEY: ${{ secrets.SSH_PRIVATE_KEY || secrets.KAMAL_SSH_PRIVATE_KEY }}
           TWC_VPS_HOST: ${{ vars.TWC_VPS_HOST }}
-        run: |
-          if [ -z "$SSH_PRIVATE_KEY" ]; then
-            echo "SSH_PRIVATE_KEY secret is empty — add SSH_PRIVATE_KEY or KAMAL_SSH_PRIVATE_KEY matching the VPS authorized_keys." >&2
-            exit 1
-          fi
-          mkdir -p ~/.ssh
-          echo "$SSH_PRIVATE_KEY" > ~/.ssh/id_ed25519
-          chmod 600 ~/.ssh/id_ed25519
-          eval "$(ssh-agent -s)"
-          ssh-add ~/.ssh/id_ed25519
-          ssh-keyscan -H "$TWC_VPS_HOST" >> ~/.ssh/known_hosts
-          ssh -o BatchMode=yes -o ConnectTimeout=15 "root@${TWC_VPS_HOST}" "echo SSH OK"
+        run: .github/scripts/setup-kamal-ssh.sh
 
       - name: Use CI Kamal secrets file
         run: cp .kamal/secrets.cd .kamal/secrets
@@ -72,7 +64,7 @@ jobs:
         run: bin/kamal setup
         env:
           KAMAL_REGISTRY_USERNAME: ${{ github.actor }}
-          KAMAL_REGISTRY_PASSWORD: ${{ secrets.GITHUB_TOKEN }}
+          KAMAL_REGISTRY_PASSWORD: ${{ github.token }}
           RAILS_MASTER_KEY: ${{ secrets.RAILS_MASTER_KEY }}
           ATLAS_QUANT_DATABASE_PASSWORD: ${{ secrets.ATLAS_QUANT_DATABASE_PASSWORD }}
 
@@ -83,12 +75,7 @@ jobs:
           TWC_VPS_HOST: ${{ vars.TWC_VPS_HOST }}
           TWC_APP_HOST: ${{ vars.TWC_APP_HOST }}
         run: |
-          mkdir -p ~/.ssh
-          echo "$SSH_PRIVATE_KEY" > ~/.ssh/id_ed25519
-          chmod 600 ~/.ssh/id_ed25519
-          eval "$(ssh-agent -s)"
-          ssh-add ~/.ssh/id_ed25519
-          ssh-keyscan -H "$TWC_VPS_HOST" >> ~/.ssh/known_hosts
+          .github/scripts/setup-kamal-ssh.sh
           scp -r deploy/plane-shared "root@${TWC_VPS_HOST}:/tmp/atlasquant-plane-shared"
           ssh "root@${TWC_VPS_HOST}" \
             "ATLAS_APP_HOST=${TWC_APP_HOST} bash /tmp/atlasquant-plane-shared/install.sh"
