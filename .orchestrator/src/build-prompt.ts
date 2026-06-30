@@ -1,4 +1,5 @@
 import type { PlaneWorkItem } from "./plane-client.js";
+import { NEEDS_INFO_PROTOCOL } from "./plane-clarification.js";
 
 const AGENTS_RULES = `
 Rules (from AGENTS.md):
@@ -28,6 +29,9 @@ const SDD_GATES = `
 - Plan conflicts with codebase → revise plan (draft) + re-ground
 - AC not met → continue implement
 - Ambiguous spec → revise spec (draft) + re-run TAUS review
+- Missing/ambiguous brief or facts → Needs Info in Plane (see below), do not guess
+
+${NEEDS_INFO_PROTOCOL}
 `.trim();
 
 export function buildAgentPrompt(issue: PlaneWorkItem): string {

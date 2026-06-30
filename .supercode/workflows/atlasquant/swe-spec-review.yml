@@ -38,6 +38,9 @@
     2. Запиши строку `GATE_1: FAIL` в `.agent-run/gate-1.result`
     3. Выведи: `GATE_1: FAIL` и numbered list правок (конкретно, без «улучши»)
     4. НЕ переходи к реализации
+
+    **Needs Info:** если brief/spec не хватает фактов для TAUS — не угадывай AC. Plane MCP:
+    `plane-mcp-context.sh clarify "Spec Review" "Q?"` → comment + Blocked. См. `docs/agent-pipeline/agent-clarification.md`.
   instantRun: true
 
 "SWE Spec Review Loop":

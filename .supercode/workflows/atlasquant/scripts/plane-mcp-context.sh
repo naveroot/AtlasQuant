@@ -4,6 +4,7 @@
 #   plane-mcp-context.sh              # base config
 #   plane-mcp-context.sh load         # intake step
 #   plane-mcp-context.sh transition <state_key> [comment]
+#   plane-mcp-context.sh clarify <role> [--assumed text] "Q1" ["Q2" ...]
 set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
@@ -86,6 +87,7 @@ Project ID: \`${PLANE_PROJECT_ID}\`
 | Load issue by UUID | \`retrieve_work_item\` | \`project_id\`, \`work_item_id\` |
 | Change state | \`update_work_item\` | \`project_id\`, \`work_item_id\`, \`state_id\` |
 | Add gate comment | \`create_work_item_comment\` | \`project_id\`, \`work_item_id\`, \`comment_html\` |
+| Needs Info (clarify) | \`bash agent-clarification.sh\` or MCP below | see \`docs/agent-pipeline/agent-clarification.md\` |
 | List states | \`list_states\` | \`project_id\` |
 
 Comments must be HTML, e.g. \`<p>Gate 1 PASS → Grounding</p>\`.
@@ -191,6 +193,77 @@ Confirm both calls succeeded before continuing.
 EOF
 }
 
+emit_clarify() {
+  local role="${1:?role required}"
+  shift
+
+  local assumed=""
+  local -a questions=()
+  while [[ $# -gt 0 ]]; do
+    case "$1" in
+      --assumed)
+        assumed="${2:?--assumed requires a value}"
+        shift 2
+        ;;
+      *)
+        questions+=("$1")
+        shift
+        ;;
+    esac
+  done
+
+  if [[ ${#questions[@]} -eq 0 ]]; then
+    echo "Error: at least one question required" >&2
+    exit 1
+  fi
+
+  local blocked_uuid
+  blocked_uuid=$(resolve_state_uuid blocked)
+
+  emit_base
+
+  local work_item_id="${PLANE_ISSUE_ID:-}"
+  local comment_html
+  comment_html=$(
+    python3 - "${role}" "${assumed}" "${questions[@]}" <<'PY'
+import html, sys
+role, assumed = sys.argv[1], sys.argv[2]
+questions = sys.argv[3:]
+items = "".join(f"<li>{html.escape(q)}</li>" for q in questions)
+out = f"<p><strong>[Needs Info] [{html.escape(role)}]</strong></p>"
+out += "<p>Blocked pending clarification:</p>"
+out += f"<ol>{items}</ol>"
+if assumed:
+    out += f"<p><em>Assumed if no reply:</em> {html.escape(assumed)}</p>"
+print(out)
+PY
+  )
+
+  cat <<EOF
+
+## Needs Info → Blocked
+
+Do **not** guess. Post clarification in the Plane work item and stop until human replies.
+
+1. \`create_work_item_comment\`
+   - project_id: \`${PLANE_PROJECT_ID}\`
+   - work_item_id: \`${work_item_id:-<from retrieve_work_item>}\`
+   - comment_html:
+
+\`\`\`html
+${comment_html}
+\`\`\`
+
+2. \`update_work_item\`
+   - state_id: \`${blocked_uuid}\` (blocked)
+
+Or run: \`bash .supercode/workflows/atlasquant/scripts/agent-clarification.sh ${role} ${work_item_id:-<issue_id>} ...\`
+
+After human reply in comments: human moves Blocked → Agent Ready; reload issue before continuing.
+See \`docs/agent-pipeline/agent-clarification.md\`.
+EOF
+}
+
 main() {
   load_env
   local mode="${1:-env}"
@@ -199,8 +272,9 @@ main() {
     env|base) emit_base ;;
     load) emit_load ;;
     transition) shift; emit_transition "$@" ;;
+    clarify) shift; emit_clarify "$@" ;;
     *)
-      echo "Usage: plane-mcp-context.sh [env|load|transition <state_key> [comment]]" >&2
+      echo "Usage: plane-mcp-context.sh [env|load|transition <state_key> [comment]|clarify <role> [--assumed text] \"Q1\" ...]" >&2
       exit 1
       ;;
   esac

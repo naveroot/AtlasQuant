@@ -35,4 +35,7 @@
     `bash .supercode/workflows/atlasquant/scripts/init-agent-run.sh <slug> "<title>"`
 
     НЕ пиши production-код. НЕ ставь status: active — это делает Spec Review.
+
+    **Needs Info:** если brief неполный или двусмысленный — не угадывай. Опубликуй запрос в Plane:
+    `bash .supercode/workflows/atlasquant/scripts/plane-mcp-context.sh clarify Architect "Q1?" "Q2?"` → MCP comment + Blocked. См. `docs/agent-pipeline/agent-clarification.md`.
   instantRun: true

@@ -28,6 +28,9 @@
     - AGENTS.md MVP scope + security policy
 
     Следуй active plan в Plane Pages (external_id `docs/plans/<slug>.md`) пошагово.
+
+    **Needs Info:** если для шага не хватает решения/product facts — не угадывай. Plane:
+    `plane-mcp-context.sh clarify Implement "Q?"` → comment + Blocked. См. `docs/agent-pipeline/agent-clarification.md`.
   instantRun: true
   actions:
     - "CI Must Pass"

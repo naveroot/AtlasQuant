@@ -8,7 +8,8 @@
     "setup:states": "tsx --env-file=.env src/setup-plane-states.ts",
     "start": "tsx --env-file=.env src/poll-plane.ts",
     "agent": "tsx --env-file=.env src/start-agent.ts",
-    "agent:issue": "tsx --env-file=.env src/start-agent.ts --issue"
+    "agent:issue": "tsx --env-file=.env src/start-agent.ts --issue",
+    "test": "node --import tsx --test src/**/*.test.ts"
   },
   "dependencies": {
     "@cursor/sdk": "^1.0.22",

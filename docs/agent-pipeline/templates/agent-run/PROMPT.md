@@ -33,3 +33,4 @@
 | Plan vs codebase conflict | Обновить plan, status → draft, Grounding |
 | AC не закрыты | Вернуться к Implement |
 | Spec ambiguous | status → draft, Spec Review |
+| **Нехватка информации / неясный brief** | **Plane comment `[Needs Info]` → Blocked; не угадывать** (см. `docs/agent-pipeline/agent-clarification.md`) |

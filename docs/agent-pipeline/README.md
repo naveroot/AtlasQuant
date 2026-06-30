@@ -222,6 +222,9 @@ docs/
 | Plan vs code conflict | Architect + Grounding | Blocked |
 | AC not met | Implement | Blocked |
 | Spec ambiguous | Architect + Spec Review | Blocked |
+| **Missing info / unclear brief** | **Plane comment `[Needs Info]`** | **Blocked** (human reply → Agent Ready) |
+
+Подробности: [agent-clarification.md](agent-clarification.md)
 
 ## GitHub Actions: Plane sync при merge PR
 
