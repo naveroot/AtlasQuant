@@ -10,6 +10,7 @@
 | Документ | Назначение |
 |----------|------------|
 | [AGENTS.md](../AGENTS.md) | Продукт, стек, MVP scope, security policy |
+| [decisions/001-product-core-moex-basis.md](decisions/001-product-core-moex-basis.md) | ADR: ядро продукта — MOEX базис |
 | [agent-pipeline/README.md](agent-pipeline/README.md) | Конвейер Plane → Supercode → CI → PR |
 | [plane-pages/README.md](plane-pages/README.md) | Memory Bank в Plane Pages + manifest |
 

@@ -1,8 +1,10 @@
 # AtlasQuant
 
-Веб-приложение для отслеживания биржевых инструментов с фокусом на **валютные фьючерсы** и расчёт **funding rate** для perpetual-контрактов.
+Веб-приложение для отслеживания **валютных фьючерсов MOEX** и аналитики **базиса, контанго и стоимости удержания** (implied cost of carry).
 
-AtlasQuant помогает пользователям отслеживать динамику инструментов в персональном списке, получать аналитику по текущим рыночным условиям и рассчитывать периодические платежи между long и short позициями для привязки цены perpetual к споту.
+AtlasQuant помогает пользователям отслеживать динамику инструментов в персональном списке, получать аналитику по текущим рыночным условиям на FORTS и оценивать отклонение цены фьючерса от спота — базис и annualized implied yield до экспирации.
+
+Стратегическое решение по ядру продукта: [docs/decisions/001-product-core-moex-basis.md](docs/decisions/001-product-core-moex-basis.md).
 
 ## Технологический стек
 
@@ -34,7 +36,7 @@ mise exec -- bin/dev
 
 Приложение будет доступно на [http://localhost:3000](http://localhost:3000).
 
-`bin/setup` устанавливает gem-зависимости, подготавливает базу данных и по умолчанию запускает dev-сервер. Чтобы пропустить автозапуск сервера:
+`bin/setup` устанавливает gem-зависимости, подготавливает базу данных и по умолчанию запускает dev-сервер. Чтобы пропустить autostart сервера:
 
 ```bash
 mise exec -- bin/setup --skip-server
@@ -85,6 +87,7 @@ GitHub Actions: `.github/workflows/ci.yml`.
 | Документ | Назначение |
 |----------|------------|
 | [AGENTS.md](AGENTS.md) | MVP scope, архитектура, security policy, правила для агентов |
+| [docs/decisions/001-product-core-moex-basis.md](docs/decisions/001-product-core-moex-basis.md) | ADR: ядро продукта — MOEX базис |
 | [docs/index.md](docs/index.md) | Memory Bank и SDD quality gates |
 | [docs/agent-pipeline/README.md](docs/agent-pipeline/README.md) | Конвейер Plane → Supercode → CI → PR |
 
