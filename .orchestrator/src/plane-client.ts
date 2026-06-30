@@ -57,6 +57,14 @@ export interface PlaneWorkItemList {
   next_cursor?: string;
 }
 
+export interface PlaneUser {
+  id: string;
+  display_name?: string;
+  first_name?: string;
+  last_name?: string;
+  email?: string;
+}
+
 export interface PlaneStateList {
   results: PlaneState[];
   next_cursor?: string;
@@ -242,6 +250,10 @@ export class PlaneClient {
         body: JSON.stringify({ comment_html: commentHtml }),
       },
     );
+  }
+
+  async getCurrentUser(): Promise<PlaneUser> {
+    return this.request<PlaneUser>("/users/me/");
   }
 
   filterByState(items: PlaneWorkItem[], stateId: string): PlaneWorkItem[] {

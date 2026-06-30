@@ -1,9 +1,7 @@
 import { Agent, CursorAgentError } from "@cursor/sdk";
 import { getStateId, loadConfig, requireEnv } from "./config.js";
-import {
-  getWorkItemStateId,
-  PlaneClient,
-} from "./plane-client.js";
+import { getWorkItemStateId } from "./plane-client.js";
+import { createPlaneClients } from "./plane-clients.js";
 import { buildAgentPrompt } from "./build-prompt.js";
 
 async function main(): Promise<void> {
@@ -19,16 +17,14 @@ async function main(): Promise<void> {
 
   let prompt: string;
   let planeIssueId: string | undefined;
-  let plane: PlaneClient | undefined;
+  let planeAdmin: ReturnType<typeof createPlaneClients>["admin"] | undefined;
+  let planeAgent: ReturnType<typeof createPlaneClients>["agent"] | undefined;
 
   if (issueId) {
-    plane = new PlaneClient(
-      config.plane.base_url,
-      requireEnv("PLANE_API_KEY"),
-      config.plane.workspace,
-      config.plane.project_id,
-    );
-    const issue = await plane.getWorkItem(issueId);
+    const clients = createPlaneClients();
+    planeAdmin = clients.admin;
+    planeAgent = clients.agent;
+    const issue = await planeAdmin.getWorkItem(issueId);
     prompt = buildAgentPrompt(issue);
     planeIssueId = issue.id;
 
@@ -37,8 +33,8 @@ async function main(): Promise<void> {
     const specReviewStateId = getStateId(config, "spec_review");
 
     if (currentStateId === readyStateId) {
-      await plane.updateWorkItemState(issue.id, specReviewStateId);
-      await plane.addComment(
+      await planeAdmin.updateWorkItemState(issue.id, specReviewStateId);
+      await planeAgent.addComment(
         issue.id,
         `<p>🤖 Cloud agent started → Spec Review</p>`,
       );
@@ -103,27 +99,27 @@ async function main(): Promise<void> {
       agentError = true;
     }
 
-    if (planeIssueId && plane) {
+    if (planeIssueId && planeAdmin && planeAgent) {
       const prLink = result.git?.branches?.find((b) => b.prUrl)?.prUrl;
 
       if (agentError) {
-        await plane.updateWorkItemState(
+        await planeAdmin.updateWorkItemState(
           planeIssueId,
           getStateId(config, "blocked"),
         );
-        await plane.addComment(
+        await planeAgent.addComment(
           planeIssueId,
           `<p>⚠️ Cloud agent error</p><p>Agent: <code>${agent.agentId}</code></p>`,
         );
       } else {
-        await plane.updateWorkItemState(
+        await planeAdmin.updateWorkItemState(
           planeIssueId,
           getStateId(config, "review"),
         );
         const comment = prLink
           ? `<p>🤖 Cloud Agent finished → Review</p><p>Agent: <code>${agent.agentId}</code></p><p>PR: <a href="${prLink}">${prLink}</a></p>`
           : `<p>🤖 Cloud Agent finished → Review</p><p>Agent: <code>${agent.agentId}</code></p>`;
-        await plane.addComment(planeIssueId, comment);
+        await planeAgent.addComment(planeIssueId, comment);
       }
     }
 
@@ -131,12 +127,12 @@ async function main(): Promise<void> {
       process.exit(2);
     }
   } catch (err) {
-    if (planeIssueId && plane) {
-      await plane.updateWorkItemState(
+    if (planeIssueId && planeAdmin && planeAgent) {
+      await planeAdmin.updateWorkItemState(
         planeIssueId,
         getStateId(config, "blocked"),
       );
-      await plane.addComment(
+      await planeAgent.addComment(
         planeIssueId,
         `<p>⚠️ Cloud agent startup/runtime failure</p>`,
       );
