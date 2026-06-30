@@ -1,50 +1,60 @@
 import { Controller } from "@hotwired/stimulus"
-import Chart from "chart.js/auto"
+import { createChart, CandlestickSeries } from "lightweight-charts"
 
 export default class extends Controller {
   static values = {
-    labels: Array,
-    values: Array
+    candles: Array
   }
 
+  static targets = ["container"]
+
   connect() {
-    this.chart = new Chart(this.element, {
-      type: "line",
-      data: {
-        labels: this.labelsValue,
-        datasets: [
-          {
-            label: "Close",
-            data: this.valuesValue,
-            borderColor: "rgb(37, 99, 235)",
-            backgroundColor: "rgba(37, 99, 235, 0.1)",
-            tension: 0.2,
-            fill: true,
-            pointRadius: 2
-          }
-        ]
+    this.chart = createChart(this.containerTarget, {
+      layout: {
+        background: { color: "#ffffff" },
+        textColor: "#374151"
       },
-      options: {
-        responsive: true,
-        maintainAspectRatio: false,
-        scales: {
-          x: {
-            ticks: { maxTicksLimit: 10 }
-          },
-          y: {
-            ticks: {
-              callback: (value) => value.toLocaleString()
-            }
-          }
-        },
-        plugins: {
-          legend: { display: false }
-        }
+      grid: {
+        vertLines: { color: "#f3f4f6" },
+        horzLines: { color: "#f3f4f6" }
+      },
+      crosshair: {
+        mode: 1
+      },
+      rightPriceScale: {
+        borderColor: "#e5e7eb"
+      },
+      timeScale: {
+        borderColor: "#e5e7eb",
+        timeVisible: false
       }
     })
+
+    this.series = this.chart.addSeries(CandlestickSeries, {
+      upColor: "#16a34a",
+      downColor: "#dc2626",
+      borderUpColor: "#16a34a",
+      borderDownColor: "#dc2626",
+      wickUpColor: "#16a34a",
+      wickDownColor: "#dc2626"
+    })
+
+    this.series.setData(this.candlesValue)
+    this.chart.timeScale().fitContent()
+    this.resizeObserver = new ResizeObserver(() => this.resize())
+    this.resizeObserver.observe(this.containerTarget)
+    this.resize()
   }
 
   disconnect() {
-    this.chart?.destroy()
+    this.resizeObserver?.disconnect()
+    this.chart?.remove()
+  }
+
+  resize() {
+    const { width, height } = this.containerTarget.getBoundingClientRect()
+    if (width > 0 && height > 0) {
+      this.chart.applyOptions({ width, height })
+    }
   }
 }
