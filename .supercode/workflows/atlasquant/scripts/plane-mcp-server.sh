@@ -25,7 +25,11 @@ load_env() {
 
 load_env
 
-: "${PLANE_API_KEY:?PLANE_API_KEY is required (see .supercode/workflows/atlasquant/.env)}"
+if [[ -n "${PLANE_AGENT_API_KEY:-}" ]]; then
+  export PLANE_API_KEY="${PLANE_AGENT_API_KEY}"
+fi
+
+: "${PLANE_API_KEY:?PLANE_API_KEY is required (see .supercode/workflows/atlasquant/.env; prefer PLANE_AGENT_API_KEY for agent comments)}"
 : "${PLANE_BASE_URL:=https://plane.alfapulse.ru}"
 
 export PLANE_API_KEY

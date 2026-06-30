@@ -130,8 +130,17 @@ main() {
   : "${PLANE_WORKSPACE:?PLANE_WORKSPACE is required}"
   : "${PLANE_PROJECT_ID:?PLANE_PROJECT_ID is required}"
 
+  local admin_key agent_key
+  admin_key="${PLANE_API_KEY}"
+  if [[ -n "${PLANE_AGENT_API_KEY:-}" ]]; then
+    agent_key="${PLANE_AGENT_API_KEY}"
+  else
+    agent_key="${PLANE_API_KEY}"
+  fi
+
   API="${PLANE_BASE_URL%/}/api/v1"
-  AUTH=(-H "X-API-Key: ${PLANE_API_KEY}")
+  AUTH=(-H "X-API-Key: ${admin_key}")
+  AGENT_AUTH=(-H "X-API-Key: ${agent_key}")
 
   local state_uuid issue_id
   state_uuid=$(resolve_state_uuid "${state_key}")
@@ -152,7 +161,7 @@ main() {
   if [[ -n "${comment}" ]]; then
     local comment_html
     comment_html=$(python3 -c "import html, sys; print(f'<p>{html.escape(sys.argv[1])}</p>')" "${comment}")
-    curl -sf "${AUTH[@]}" -X POST \
+    curl -sf "${AGENT_AUTH[@]}" -X POST \
       -H "Content-Type: application/json" \
       -d "{\"comment_html\": $(python3 -c "import json,sys; print(json.dumps(sys.argv[1]))" "${comment_html}")}" \
       "${API}/workspaces/${PLANE_WORKSPACE}/projects/${PLANE_PROJECT_ID}/work-items/${issue_id}/comments/" \

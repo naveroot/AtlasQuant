@@ -86,7 +86,7 @@ npm run setup:states   # создаёт Agent Ready, Spec Review, … в Plane
    ```bash
    cd AtlasQuant
    cp .supercode/workflows/atlasquant/.env.example .supercode/workflows/atlasquant/.env
-   # Заполните PLANE_API_KEY, PLANE_ISSUE_IDENTIFIER, PLANE_STATE_*
+   # Заполните PLANE_API_KEY, PLANE_AGENT_API_KEY (см. docs/agent-pipeline/plane-agent-account.md), PLANE_ISSUE_IDENTIFIER, PLANE_STATE_*
    mise run plane-mcp:setup   # генерирует ../.cursor/mcp.json (stdio → plane.alfapulse.ru)
    ```
 2. Reload Cursor (`Cmd+Shift+P → Reload Window`), проверьте MCP server **plane** в Settings

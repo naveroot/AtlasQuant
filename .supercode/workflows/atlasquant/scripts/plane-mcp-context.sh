@@ -66,6 +66,15 @@ Server: **plane** (stdio → ${PLANE_BASE_URL:-https://plane.alfapulse.ru})
 Workspace slug: \`${workspace_slug}\`
 Project ID: \`${PLANE_PROJECT_ID}\`
 
+## API keys (dual-key policy)
+
+| Env | Purpose |
+|-----|---------|
+| \`PLANE_API_KEY\` | Admin — orchestrator state changes, CI sync |
+| \`PLANE_AGENT_API_KEY\` | Agent comments — MCP stdio uses this when set (display name e.g. **AtlasQuant Agent**) |
+
+Setup: \`docs/agent-pipeline/plane-agent-account.md\`. Verify: \`bash .supercode/workflows/atlasquant/scripts/verify-plane-agent.sh\`.
+
 ## Pipeline state UUIDs (for \`update_work_item\` → \`state_id\`)
 
 | Key | UUID |
