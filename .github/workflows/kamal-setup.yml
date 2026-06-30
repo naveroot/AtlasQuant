@@ -37,7 +37,7 @@ jobs:
 
       - name: Validate Kamal deploy inputs
         env:
-          SSH_PRIVATE_KEY: ${{ secrets.SSH_PRIVATE_KEY || secrets.KAMAL_SSH_PRIVATE_KEY }}
+          SSH_PRIVATE_KEY: ${{ secrets.KAMAL_SSH_PRIVATE_KEY || secrets.SSH_PRIVATE_KEY }}
           TWC_VPS_HOST: ${{ vars.TWC_VPS_HOST }}
           RAILS_MASTER_KEY: ${{ secrets.RAILS_MASTER_KEY }}
           ATLAS_QUANT_DATABASE_PASSWORD: ${{ secrets.ATLAS_QUANT_DATABASE_PASSWORD }}
@@ -53,7 +53,7 @@ jobs:
 
       - name: Set up SSH for Kamal
         env:
-          SSH_PRIVATE_KEY: ${{ secrets.SSH_PRIVATE_KEY || secrets.KAMAL_SSH_PRIVATE_KEY }}
+          SSH_PRIVATE_KEY: ${{ secrets.KAMAL_SSH_PRIVATE_KEY || secrets.SSH_PRIVATE_KEY }}
           TWC_VPS_HOST: ${{ vars.TWC_VPS_HOST }}
         run: .github/scripts/setup-kamal-ssh.sh
 
@@ -71,7 +71,7 @@ jobs:
       - name: Register AtlasQuant in Plane Caddy
         if: vars.TWC_APP_HOST != ''
         env:
-          SSH_PRIVATE_KEY: ${{ secrets.SSH_PRIVATE_KEY || secrets.KAMAL_SSH_PRIVATE_KEY }}
+          SSH_PRIVATE_KEY: ${{ secrets.KAMAL_SSH_PRIVATE_KEY || secrets.SSH_PRIVATE_KEY }}
           TWC_VPS_HOST: ${{ vars.TWC_VPS_HOST }}
           TWC_APP_HOST: ${{ vars.TWC_APP_HOST }}
         run: |
