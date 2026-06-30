@@ -5,9 +5,18 @@ class ApplicationController < ActionController::Base
   # Changes to the importmap will invalidate the etag for HTML responses
   stale_when_importmap_changes
 
-  helper_method :current_user, :logged_in?
+  helper_method :current_user, :logged_in?, :analytics_events_json
 
   private
+
+  def track_analytics_event(event, properties = {})
+    @analytics_events ||= []
+    @analytics_events << { event: event, properties: properties }
+  end
+
+  def analytics_events_json
+    (@analytics_events || []).to_json
+  end
 
   def current_user
     @current_user ||= User.find_by(id: session[:user_id]) if session[:user_id]

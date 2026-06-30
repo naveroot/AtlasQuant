@@ -5,6 +5,7 @@ Rails.application.routes.draw do
   resource :registration, only: %i[new create]
 
   resources :instruments, only: %i[index show], param: :secid
+  resource :feedback, only: %i[new create]
 
   root "home#index"
 end

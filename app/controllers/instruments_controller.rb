@@ -12,6 +12,9 @@ class InstrumentsController < ApplicationController
     @instrument = find_instrument(params[:secid])
     return unless @instrument
 
+    track_analytics_event(Analytics::TrackEvent::VIEW_INSTRUMENT, secid: @instrument.secid)
+    track_analytics_event(Analytics::TrackEvent::VIEW_BASIS, secid: @instrument.secid)
+
     @from, @till = date_range
     @candles = Moex::CurrencyFutures::HistoricalCandles.call(
       secid: @instrument.secid,

@@ -61,6 +61,39 @@ class InstrumentsControllerTest < ActionDispatch::IntegrationTest
     assert_no_match "<table", response.body
   end
 
+  test "show includes analytics events when PostHog is configured" do
+    instrument = Moex::CurrencyFutures::List::Instrument.new(
+      secid: "USDRUBF",
+      shortname: "USDRUBF",
+      asset_code: "USDRUBTOM"
+    )
+    candle = Moex::CurrencyFutures::HistoricalCandles::Candle.new(
+      traded_at: Time.zone.parse("2025-06-02 00:00:00"),
+      open: 79.1,
+      high: 79.76,
+      low: 79.05,
+      close: 79.19,
+      volume: 118052
+    )
+
+    original_api_key = ENV["POSTHOG_API_KEY"]
+    ENV["POSTHOG_API_KEY"] = "phc_test_key"
+
+    with_stubbed_class_method(Moex::CurrencyFutures::List, :call, ->(**) { [ instrument ] }) do
+      with_stubbed_class_method(Moex::CurrencyFutures::HistoricalCandles, :call, ->(**) { [ candle ] }) do
+        get instrument_path("USDRUBF")
+      end
+    end
+
+    assert_response :success
+    assert_match "data-controller=\"analytics\"", response.body
+    assert_match "view_instrument", response.body
+    assert_match "view_basis", response.body
+    assert_match "USDRUBF", response.body
+  ensure
+    ENV["POSTHOG_API_KEY"] = original_api_key
+  end
+
   test "show redirects for unknown instrument" do
     with_stubbed_class_method(Moex::CurrencyFutures::List, :call, ->(**) { [] }) do
       get instrument_path("UNKNOWN")
