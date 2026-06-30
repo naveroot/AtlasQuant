@@ -15,6 +15,7 @@ servers:
       - __TWC_VPS_HOST__
     proxy: false
     options:
+      network: "atlas_quant-net"
       publish:
         - "8080:80"
 
@@ -57,6 +58,8 @@ accessories:
     image: postgres:16
     host: __TWC_VPS_HOST__
     port: "127.0.0.1:5433:5432"
+    options:
+      network: "atlas_quant-net"
     env:
       clear:
         POSTGRES_USER: atlas_quant
