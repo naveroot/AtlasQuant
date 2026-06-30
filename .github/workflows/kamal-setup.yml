@@ -50,11 +50,11 @@ jobs:
 
       - name: Set up SSH for Kamal
         env:
-          SSH_PRIVATE_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
+          SSH_PRIVATE_KEY: ${{ secrets.SSH_PRIVATE_KEY || secrets.KAMAL_SSH_PRIVATE_KEY }}
           TWC_VPS_HOST: ${{ vars.TWC_VPS_HOST }}
         run: |
           if [ -z "$SSH_PRIVATE_KEY" ]; then
-            echo "SSH_PRIVATE_KEY secret is empty — add the private key matching the VPS authorized_keys." >&2
+            echo "SSH_PRIVATE_KEY secret is empty — add SSH_PRIVATE_KEY or KAMAL_SSH_PRIVATE_KEY matching the VPS authorized_keys." >&2
             exit 1
           fi
           mkdir -p ~/.ssh
@@ -79,7 +79,7 @@ jobs:
       - name: Register AtlasQuant in Plane Caddy
         if: vars.TWC_APP_HOST != ''
         env:
-          SSH_PRIVATE_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
+          SSH_PRIVATE_KEY: ${{ secrets.SSH_PRIVATE_KEY || secrets.KAMAL_SSH_PRIVATE_KEY }}
           TWC_VPS_HOST: ${{ vars.TWC_VPS_HOST }}
           TWC_APP_HOST: ${{ vars.TWC_APP_HOST }}
         run: |
