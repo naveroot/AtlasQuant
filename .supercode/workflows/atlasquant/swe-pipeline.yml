@@ -24,6 +24,8 @@
 
         Перед Architect: `bash .supercode/workflows/atlasquant/scripts/plane-pages-context.sh spec-plan <slug>`
 
+        **Needs Info:** при неполном brief — `plane-mcp-context.sh clarify "Load Issue" "Q?"` → Plane comment + Blocked; не продолжай pipeline.
+
         Follow AGENTS.md.
       instantRun: true
 

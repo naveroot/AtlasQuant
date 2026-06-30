@@ -35,6 +35,9 @@
     - Выведи `GATE_2: FAIL`
     - Конкретные конфликты
     - Рекомендации: правки plan (→ Architect) или уточнение spec
+
+    **Needs Info:** если конфликт нельзя разрешить без человека — Plane comment + Blocked (не угадывать):
+    `plane-mcp-context.sh clarify Grounding "Q?"`. См. `docs/agent-pipeline/agent-clarification.md`.
   instantRun: true
 
 "SWE Grounding Loop":
