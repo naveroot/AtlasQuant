@@ -40,6 +40,9 @@ ssh-add "$key_path"
 echo "::endgroup::"
 
 echo "::group::Verify VPS SSH access"
-ssh-keyscan -T 15 -H "$TWC_VPS_HOST" >> "${ssh_dir}/known_hosts"
+touch "${ssh_dir}/known_hosts"
+ssh-keygen -R "$TWC_VPS_HOST" -f "${ssh_dir}/known_hosts" >/dev/null 2>&1 || true
+ssh-keygen -R "[$TWC_VPS_HOST]:22" -f "${ssh_dir}/known_hosts" >/dev/null 2>&1 || true
+ssh-keyscan -T 15 "$TWC_VPS_HOST" >> "${ssh_dir}/known_hosts"
 ssh -o BatchMode=yes -o ConnectTimeout=15 "root@${TWC_VPS_HOST}" "echo SSH OK"
 echo "::endgroup::"
