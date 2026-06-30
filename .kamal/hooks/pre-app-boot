@@ -7,4 +7,9 @@ for host in $(echo "$KAMAL_HOSTS" | tr ',' ' '); do
   ssh "root@${host}" \
     'docker ps -q --filter "label=service=atlas_quant" --filter "label=role=web" | xargs -r docker stop -t 30' \
     || true
+
+  echo "Removing legacy atlas_quant-web container on ${host}..."
+  ssh "root@${host}" \
+    'docker ps -aq --filter "name=^atlas_quant-web$" | xargs -r docker rm -f' \
+    || true
 done
