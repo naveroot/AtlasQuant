@@ -4,7 +4,7 @@
 
 ## Plane
 
-<!-- Идентификатор задачи — для авто-sync в Done при merge PR (GitHub Actions) -->
+<!-- Required: identifier for CI validation and auto-sync to Done after merge. -->
 Plane: ATLASQUANT-
 
 ## Spec

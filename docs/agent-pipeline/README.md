@@ -229,6 +229,8 @@ Workflow `.github/workflows/sync-plane-status.yml` срабатывает при
 
 ### Как связать PR с задачей
 
+Каждый PR обязан содержать идентификатор `ATLASQUANT-N`. Проверка `.github/workflows/validate-plane-pr-link.yml` падает, если идентификатор не найден.
+
 Идентификатор `ATLASQUANT-N` ищется в (в любом порядке):
 
 - имени ветки — `feature/ATLASQUANT-12-user-auth`
@@ -259,6 +261,18 @@ PR_TITLE="feat: sessions" \
 PR_URL=https://github.com/naveroot/AtlasQuant/pull/1 \
 PLANE_DRY_RUN=1 \
 bash .supercode/workflows/atlasquant/scripts/sync-plane-on-pr-merge.sh
+```
+
+### Env hygiene
+
+Не храните `PLANE_ISSUE_ID` в постоянных `.env` файлах (`.orchestrator/.env`, `.supercode/workflows/atlasquant/.env`). Это значение допустимо только для разового ручного запуска `update-plane-state.sh`.
+
+Автоматический merge-sync использует `ATLASQUANT-N` из PR metadata и передаёт его как `PLANE_ISSUE_IDENTIFIER`; stale `PLANE_ISSUE_ID` не должен влиять на закрытие задач.
+
+Для проверки защитных сценариев:
+
+```bash
+bash .supercode/workflows/atlasquant/scripts/test-plane-sync.sh
 ```
 
 ### Webhook (альтернатива)

@@ -11,7 +11,7 @@
 set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-UPDATE_SCRIPT="${SCRIPT_DIR}/update-plane-state.sh"
+UPDATE_SCRIPT="${PLANE_UPDATE_SCRIPT:-${SCRIPT_DIR}/update-plane-state.sh}"
 
 load_env() {
   local env_file orchestrator_env
@@ -90,7 +90,10 @@ main() {
     fi
 
     echo "Updating Plane: ${ident} → done"
-    PLANE_ISSUE_IDENTIFIER="${ident}" bash "${UPDATE_SCRIPT}" done "${comment}"
+    env -u PLANE_ISSUE_ID \
+      PLANE_ISSUE_IDENTIFIER="${ident}" \
+      PLANE_ISSUE_IDENTIFIER_PRECEDENCE=1 \
+      bash "${UPDATE_SCRIPT}" done "${comment}"
   done <<< "${identifiers}"
 }
 

@@ -1,0 +1,20 @@
+name: Validate Plane PR link
+
+on:
+  pull_request:
+    types: [opened, edited, synchronize, reopened, ready_for_review]
+
+jobs:
+  validate-plane-link:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      - name: Require Plane work item identifier
+        env:
+          PLANE_PROJECT_PREFIX: ${{ vars.PLANE_PROJECT_PREFIX || 'ATLASQUANT' }}
+          PR_BRANCH: ${{ github.head_ref }}
+          PR_TITLE: ${{ github.event.pull_request.title }}
+          PR_BODY: ${{ github.event.pull_request.body }}
+        run: bash .github/scripts/validate-plane-pr-link.sh

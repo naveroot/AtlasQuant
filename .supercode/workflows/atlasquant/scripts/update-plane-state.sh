@@ -55,17 +55,32 @@ resolve_state_uuid() {
 }
 
 resolve_issue_id() {
+  if [[ -n "${PLANE_ISSUE_IDENTIFIER:-}" && "${PLANE_ISSUE_IDENTIFIER_PRECEDENCE:-}" == "1" ]]; then
+    resolve_issue_identifier "${PLANE_ISSUE_IDENTIFIER}"
+    return
+  fi
+
+  if [[ -n "${PLANE_ISSUE_ID:-}" && -n "${PLANE_ISSUE_IDENTIFIER:-}" ]]; then
+    echo "Error: both PLANE_ISSUE_ID and PLANE_ISSUE_IDENTIFIER are set. Unset one, or set PLANE_ISSUE_IDENTIFIER_PRECEDENCE=1 for PR merge automation." >&2
+    exit 1
+  fi
+
   if [[ -n "${PLANE_ISSUE_ID:-}" ]]; then
     echo "${PLANE_ISSUE_ID}"
     return
   fi
 
-  if [[ -z "${PLANE_ISSUE_IDENTIFIER:-}" ]]; then
-    echo "Error: set PLANE_ISSUE_ID or PLANE_ISSUE_IDENTIFIER" >&2
-    exit 1
+  if [[ -n "${PLANE_ISSUE_IDENTIFIER:-}" ]]; then
+    resolve_issue_identifier "${PLANE_ISSUE_IDENTIFIER}"
+    return
   fi
 
-  local ident="${PLANE_ISSUE_IDENTIFIER}"
+  echo "Error: set PLANE_ISSUE_ID or PLANE_ISSUE_IDENTIFIER" >&2
+  exit 1
+}
+
+resolve_issue_identifier() {
+  local ident="$1"
   local seq="${ident##*-}"
   local prefix="${ident%-*}"
 
@@ -87,6 +102,9 @@ else:
 main() {
   local state_key="${1:-}"
   local comment="${2:-}"
+  local requested_issue_id="${PLANE_ISSUE_ID:-}"
+  local requested_issue_identifier="${PLANE_ISSUE_IDENTIFIER:-}"
+  local requested_identifier_precedence="${PLANE_ISSUE_IDENTIFIER_PRECEDENCE:-}"
 
   if [[ -z "${state_key}" ]]; then
     echo "Usage: update-plane-state.sh <state_key> [comment]" >&2
@@ -95,6 +113,17 @@ main() {
   fi
 
   load_env
+
+  # Inline env passed by automation must win over persistent .env values.
+  if [[ -n "${requested_issue_id}" ]]; then
+    PLANE_ISSUE_ID="${requested_issue_id}"
+  fi
+  if [[ -n "${requested_issue_identifier}" ]]; then
+    PLANE_ISSUE_IDENTIFIER="${requested_issue_identifier}"
+  fi
+  if [[ -n "${requested_identifier_precedence}" ]]; then
+    PLANE_ISSUE_IDENTIFIER_PRECEDENCE="${requested_identifier_precedence}"
+  fi
 
   : "${PLANE_API_KEY:?PLANE_API_KEY is required}"
   : "${PLANE_BASE_URL:=https://plane.alfapulse.ru}"
@@ -107,6 +136,10 @@ main() {
   local state_uuid issue_id
   state_uuid=$(resolve_state_uuid "${state_key}")
   issue_id=$(resolve_issue_id)
+
+  if [[ -n "${PLANE_ISSUE_IDENTIFIER:-}" ]]; then
+    echo "Resolved Plane ${PLANE_ISSUE_IDENTIFIER} → ${issue_id}"
+  fi
 
   curl -sf "${AUTH[@]}" -X PATCH \
     -H "Content-Type: application/json" \
