@@ -65,7 +65,7 @@ bash .supercode/workflows/atlasquant/scripts/agent-clarification.sh \
   "Is admin-only CRUD in scope?"
 ```
 
-Uses `PLANE_AGENT_API_KEY` if set, otherwise `PLANE_API_KEY`.
+Uses `PLANE_AGENT_API_KEY` for comments (fallback `PLANE_API_KEY`). State → Blocked via admin `PLANE_API_KEY`. See [plane-agent-account.md](plane-agent-account.md).
 
 Exit codes: `0` success, `1` missing env / API error / no questions.
 
@@ -77,8 +77,8 @@ Prompt in `.orchestrator/src/build-prompt.ts` includes the same protocol. When b
 
 | Variable | Purpose |
 |----------|---------|
-| `PLANE_AGENT_API_KEY` | Preferred key for agent comments (optional) |
-| `PLANE_API_KEY` | Fallback |
+| `PLANE_AGENT_API_KEY` | Agent comments (display name e.g. AtlasQuant Agent) |
+| `PLANE_API_KEY` | Admin fallback + state changes in `agent-clarification.sh` |
 | `PLANE_STATE_BLOCKED` | Blocked state UUID |
 | `PLANE_ISSUE_ID` | Default issue when UUID omitted in script |
 

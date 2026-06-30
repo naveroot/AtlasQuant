@@ -1,4 +1,6 @@
 class User < ApplicationRecord
+  has_many :favorite_instruments, dependent: :destroy
+
   has_secure_password
 
   normalizes :email, with: ->(email) { email.strip.downcase }

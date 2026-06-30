@@ -35,6 +35,15 @@ resolve_api_key() {
   fi
 }
 
+resolve_admin_api_key() {
+  if [[ -n "${PLANE_API_KEY:-}" ]]; then
+    echo "${PLANE_API_KEY}"
+  else
+    echo "Error: set PLANE_API_KEY (admin key for state changes)" >&2
+    exit 1
+  fi
+}
+
 resolve_state_uuid() {
   local key="blocked"
   local env_var="PLANE_STATE_BLOCKED"
@@ -99,8 +108,9 @@ main() {
 
   load_env
 
-  local api_key role issue_id assumed=""
-  api_key=$(resolve_api_key)
+  local admin_key agent_key role issue_id assumed=""
+  admin_key=$(resolve_admin_api_key)
+  agent_key=$(resolve_api_key)
 
   : "${PLANE_BASE_URL:=https://plane.alfapulse.ru}"
   : "${PLANE_WORKSPACE:?PLANE_WORKSPACE is required}"
@@ -144,15 +154,16 @@ main() {
   state_uuid=$(resolve_state_uuid)
 
   API="${PLANE_BASE_URL%/}/api/v1"
-  AUTH=(-H "X-API-Key: ${api_key}")
+  ADMIN_AUTH=(-H "X-API-Key: ${admin_key}")
+  AGENT_AUTH=(-H "X-API-Key: ${agent_key}")
 
-  curl -sf "${AUTH[@]}" -X PATCH \
+  curl -sf "${ADMIN_AUTH[@]}" -X PATCH \
     -H "Content-Type: application/json" \
     -d "{\"state\": \"${state_uuid}\"}" \
     "${API}/workspaces/${PLANE_WORKSPACE}/projects/${PLANE_PROJECT_ID}/work-items/${issue_id}/" \
     > /dev/null
 
-  curl -sf "${AUTH[@]}" -X POST \
+  curl -sf "${AGENT_AUTH[@]}" -X POST \
     -H "Content-Type: application/json" \
     -d "{\"comment_html\": $(python3 -c "import json,sys; print(json.dumps(sys.argv[1]))" "${comment_html}")}" \
     "${API}/workspaces/${PLANE_WORKSPACE}/projects/${PLANE_PROJECT_ID}/work-items/${issue_id}/comments/" \

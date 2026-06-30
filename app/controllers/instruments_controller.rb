@@ -3,8 +3,10 @@ class InstrumentsController < ApplicationController
 
   def index
     @instruments = Moex::CurrencyFutures::List.call
+    @favorite_secids = favorite_secids
   rescue Moex::Client::Error => e
     @instruments = []
+    @favorite_secids = Set.new
     flash.now[:alert] = "Unable to load instruments from MOEX: #{e.message}"
   end
 
@@ -15,6 +17,7 @@ class InstrumentsController < ApplicationController
     track_analytics_event(Analytics::TrackEvent::VIEW_INSTRUMENT, secid: @instrument.secid)
     track_analytics_event(Analytics::TrackEvent::VIEW_BASIS, secid: @instrument.secid)
 
+    @favorited = favorited?(@instrument.secid)
     @from, @till = date_range
     @candles = Moex::CurrencyFutures::HistoricalCandles.call(
       secid: @instrument.secid,
@@ -58,5 +61,15 @@ class InstrumentsController < ApplicationController
     Date.iso8601(value)
   rescue Date::Error
     nil
+  end
+
+  def favorite_secids
+    return Set.new unless logged_in?
+
+    current_user.favorite_instruments.pluck(:secid).to_set
+  end
+
+  def favorited?(secid)
+    favorite_secids.include?(secid)
   end
 end

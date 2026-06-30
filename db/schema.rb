@@ -10,9 +10,20 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_06_30_120000) do
+ActiveRecord::Schema[8.1].define(version: 2026_06_30_142819) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
+
+  create_table "favorite_instruments", force: :cascade do |t|
+    t.string "asset_code", null: false
+    t.datetime "created_at", null: false
+    t.string "secid", null: false
+    t.string "shortname", null: false
+    t.datetime "updated_at", null: false
+    t.bigint "user_id", null: false
+    t.index ["user_id", "secid"], name: "index_favorite_instruments_on_user_id_and_secid", unique: true
+    t.index ["user_id"], name: "index_favorite_instruments_on_user_id"
+  end
 
   create_table "feedbacks", force: :cascade do |t|
     t.datetime "created_at", null: false
@@ -31,5 +42,6 @@ ActiveRecord::Schema[8.1].define(version: 2026_06_30_120000) do
     t.index ["email"], name: "index_users_on_email", unique: true
   end
 
+  add_foreign_key "favorite_instruments", "users"
   add_foreign_key "feedbacks", "users"
 end

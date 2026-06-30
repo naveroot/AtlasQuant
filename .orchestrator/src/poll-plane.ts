@@ -1,11 +1,11 @@
 import { mkdirSync, readFileSync, writeFileSync, existsSync } from "node:fs";
 import { dirname, resolve } from "node:path";
-import { loadConfig, getStateId, requireEnv } from "./config.js";
+import { loadConfig, getStateId } from "./config.js";
 import {
   getWorkItemStateId,
   PlaneApiError,
-  PlaneClient,
 } from "./plane-client.js";
+import { createPlaneClients } from "./plane-clients.js";
 import { spawn } from "node:child_process";
 import { fileURLToPath } from "node:url";
 
@@ -47,12 +47,7 @@ async function pollOnce(): Promise<void> {
   const statePath = resolve(REPO_ROOT, config.state_file);
   const failedState = loadFailedState(statePath);
 
-  const plane = new PlaneClient(
-    config.plane.base_url,
-    requireEnv("PLANE_API_KEY"),
-    config.plane.workspace,
-    config.plane.project_id,
-  );
+  const { admin: plane, agent: planeAgent } = createPlaneClients();
 
   const readyStateId = getStateId(config, "ready");
   const specReviewStateId = getStateId(config, "spec_review");
@@ -105,7 +100,7 @@ async function pollOnce(): Promise<void> {
   );
 
   await plane.updateWorkItemState(issue.id, specReviewStateId);
-  await plane.addComment(
+  await planeAgent.addComment(
     issue.id,
     `<p>🤖 Orchestrator claimed issue → Spec Review</p>`,
   );
@@ -122,7 +117,7 @@ async function pollOnce(): Promise<void> {
     if (currentState !== blockedStateId) {
       await plane.updateWorkItemState(issue.id, blockedStateId);
     }
-    await plane.addComment(
+    await planeAgent.addComment(
       issue.id,
       `<p>⚠️ Cloud agent failed (exit ${exitCode}). State → Blocked. Check orchestrator logs.</p>`,
     );

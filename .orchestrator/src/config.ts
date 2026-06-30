@@ -113,6 +113,11 @@ export function requireEnv(name: string): string {
   return value;
 }
 
+/** Agent comments use PLANE_AGENT_API_KEY when set; otherwise same as admin key. */
+export function resolvePlaneAgentApiKey(): string {
+  return process.env.PLANE_AGENT_API_KEY?.trim() || requireEnv("PLANE_API_KEY");
+}
+
 export function getStateId(
   config: OrchestratorConfig,
   key: PlaneStateKey,
