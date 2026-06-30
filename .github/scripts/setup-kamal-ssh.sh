@@ -7,10 +7,15 @@ set -euo pipefail
 ssh_dir="${HOME}/.ssh"
 key_path="${SSH_KEY_PATH:-${ssh_dir}/id_ed25519}"
 
+echo "::group::Configure SSH key"
 mkdir -p "$ssh_dir"
 chmod 700 "$ssh_dir"
 
-printf '%s\n' "$SSH_PRIVATE_KEY" | tr -d '\r' > "$key_path"
+if [[ "$SSH_PRIVATE_KEY" == *\\n* ]]; then
+  printf '%b\n' "$SSH_PRIVATE_KEY" | tr -d '\r' > "$key_path"
+else
+  printf '%s\n' "$SSH_PRIVATE_KEY" | tr -d '\r' > "$key_path"
+fi
 chmod 600 "$key_path"
 
 if ! grep -q "BEGIN .*PRIVATE KEY" "$key_path"; then
@@ -18,8 +23,23 @@ if ! grep -q "BEGIN .*PRIVATE KEY" "$key_path"; then
   exit 1
 fi
 
+cat > "${ssh_dir}/config" <<EOF
+Host *
+  IdentityFile ${key_path}
+  IdentitiesOnly yes
+  StrictHostKeyChecking yes
+EOF
+chmod 600 "${ssh_dir}/config"
+
+echo "SSH private key format looks valid."
+echo "::endgroup::"
+
+echo "::group::Start ssh-agent"
 eval "$(ssh-agent -s)"
 ssh-add "$key_path"
+echo "::endgroup::"
 
+echo "::group::Verify VPS SSH access"
 ssh-keyscan -T 15 -H "$TWC_VPS_HOST" >> "${ssh_dir}/known_hosts"
-ssh -o BatchMode=yes -o StrictHostKeyChecking=yes -o ConnectTimeout=15 "root@${TWC_VPS_HOST}" "echo SSH OK"
+ssh -o BatchMode=yes -o ConnectTimeout=15 "root@${TWC_VPS_HOST}" "echo SSH OK"
+echo "::endgroup::"
