@@ -47,7 +47,9 @@ const PIPELINE_STATES: PipelineStateDef[] = [
   {
     key: "blocked",
     name: "Blocked",
-    group: "backlog",
+    // Keep out of \"backlog\" — Plane orders kanban columns by state group first,
+    // so \"backlog\" states appear at the left edge and push real work off-screen.
+    group: "started",
     color: "#EF4444",
   },
   {
