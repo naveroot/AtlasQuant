@@ -39,15 +39,14 @@ flowchart LR
 
 Приложение построено на Ruby on Rails 8. Кэш, фоновые задачи и Action Cable используют адаптеры Solid (хранение в PostgreSQL), без отдельного Redis-сервера.
 
-### Доменные сущности MVP
+### Доменные сущности
 
-Сущности запланированы, но ещё не реализованы в коде:
-
-| Сущность | Назначение |
-|----------|------------|
-| `User` | Авторизация и персонализация |
-| `Instrument` | Биржевой инструмент (валютный фьючерс MOEX) |
-| `BasisCalculator` (сервис) | Расчёт базиса и implied yield по `(F, S, T)` |
+| Сущность | Статус | Назначение | Evidence |
+|----------|--------|------------|----------|
+| `User` | ✅ реализовано | Авторизация и персонализация | `app/models/user.rb` (#1) |
+| `Moex::CurrencyFutures::List::Instrument` | ✅ value object | Данные инструмента из MOEX ISS (без AR) | `app/services/moex/currency_futures/list.rb` (#4) |
+| `Instrument` | ⬜ backlog | AR-модель персонального списка инструментов | — |
+| `BasisCalculator` (сервис) | ⬜ backlog | Расчёт базиса и implied yield по `(F, S, T)` | ADR-001 |
 
 ---
 
@@ -63,7 +62,7 @@ flowchart LR
 | Фоновые задачи | Solid Queue (PostgreSQL) | есть | `solid_queue`, `config/queue.yml` |
 | WebSocket | Solid Cable (PostgreSQL) | есть | `solid_cable`, `config/cable.yml` |
 | Frontend | Tailwind CSS, Hotwire (Turbo + Stimulus), importmap | есть | `tailwindcss-rails`, `Procfile.dev` |
-| Тестирование | RSpec + SimpleCov | **целевой стек MVP** | сейчас Minitest в `test/` |
+| Тестирование | Minitest (текущий) / RSpec + SimpleCov (целевой) | Minitest в `test/` (~13 файлов) | `test/`; `spec/` — backlog |
 | Среда разработки | Mise | есть | `mise.toml` |
 | Деплой | Kamal, Docker | есть | `Dockerfile`, `config/deploy.yml` |
 
@@ -77,9 +76,11 @@ flowchart LR
 
 Redis **не используется** и не планируется для MVP.
 
-### Тестирование (целевой стек)
+### Тестирование
 
-При работе над MVP необходимо:
+**Текущий стек:** Minitest в `test/` — покрывает auth (#1), MOEX-сервисы и `InstrumentsController` (#4).
+
+**Целевой стек MVP:**
 
 1. Мигрировать тесты с Minitest (`test/`) на RSpec (`spec/`).
 2. Подключить SimpleCov для отчётов о покрытии.
@@ -201,12 +202,14 @@ chore: обновить зависимости
 
 ### In scope
 
-- [ ] **Авторизация** — собственная система (`User`, sessions, `has_secure_password`)
-- [ ] **Инструменты** — просмотр и управление списком валютных фьючерсов (CRUD)
-- [ ] **Базис** — расчёт базиса и implied yield (`app/services/basis_calculator.rb`)
-- [ ] **UI** — базовый интерфейс на Tailwind CSS (списки, формы, дашборд)
-- [ ] **Тесты** — покрытие основного функционала через RSpec и SimpleCov
-- [ ] **Безопасность** — инструменты аудита в dev/CI (brakeman, bundler-audit, rubocop; расширить рекомендуемыми гемами)
+- [x] **Авторизация** — `User`, sessions, `has_secure_password` (#1)
+- [x] **MOEX-интеграция** — on-demand котировки FORTS и графики (#4, #7)
+- [x] **CI/CD** — Kamal deploy, GitHub Actions, `bin/ci` (#2)
+- [x] **Безопасность** — brakeman, bundler-audit, rubocop, importmap audit в CI
+- [~] **UI** — auth-формы, список/график MOEX есть; аналитический дашборд — нет
+- [ ] **Персональный список** — AR `Instrument`, CRUD watchlist (backlog)
+- [ ] **Базис** — `BasisCalculator`, спот-референс (ADR-001, backlog)
+- [ ] **Тесты** — миграция Minitest → RSpec + SimpleCov (backlog)
 
 ### Out of scope
 
@@ -223,20 +226,26 @@ chore: обновить зависимости
 
 ### Ориентиры по реализации
 
-**Контроллеры MVP:**
+**Контроллеры:**
 
-| Контроллер | Ответственность |
-|------------|-----------------|
-| `SessionsController` | Вход / выход |
-| `RegistrationsController` | Регистрация пользователя |
-| `InstrumentsController` | CRUD инструментов |
-| `DashboardController` | Главная страница с аналитикой |
+| Контроллер | Статус | Ответственность |
+|------------|--------|-----------------|
+| `SessionsController` | ✅ | Вход / выход |
+| `RegistrationsController` | ✅ | Регистрация пользователя |
+| `InstrumentsController` | ✅ read-only | Список MOEX FORTS + график (#4) |
+| `HomeController` | ✅ placeholder | Landing; заменится `DashboardController` |
+| `DashboardController` | ⬜ backlog | Главная страница с аналитикой базиса |
 
-**Сервисы MVP:**
+**Сервисы:**
 
-| Сервис | Ответственность |
-|--------|-----------------|
-| `BasisCalculator` | Расчёт базиса и implied yield по `(F, S, T)` — см. ADR-001 |
+| Сервис | Статус | Ответственность |
+|--------|--------|-----------------|
+| `Moex::Client` | ✅ | HTTP к MOEX ISS |
+| `Moex::CurrencyFutures::List` | ✅ | Список валютных фьючерсов FORTS |
+| `Moex::CurrencyFutures::HistoricalCandles` | ✅ | Daily OHLCV по `secid` |
+| `Sessions::Authenticate` | ✅ | Проверка credentials |
+| `Users::Register` | ✅ | Создание пользователя |
+| `BasisCalculator` | ⬜ backlog | Расчёт базиса и implied yield — см. ADR-001 |
 
 **Правила для агентов при разработке MVP:**
 
@@ -245,6 +254,24 @@ chore: обновить зависимости
 - UI — server-rendered ERB + Tailwind; Stimulus только для интерактивности.
 - Не добавлять зависимости без необходимости; следовать существующим конвенциям Rails 8.
 - Минимальный diff: решать задачу MVP, не рефакторить несвязанный код.
+
+---
+
+## Backlog (Plane)
+
+| # | Задача | Статус | Артефакт |
+|---|--------|--------|----------|
+| 1 | User Auth MVP | ✅ Done | `docs/plans/#1.md` |
+| 2 | Deploy TimeWeb CI/CD | ✅ Done | `docs/specs/-2.md` |
+| 3 | README | ✅ Done | `docs/specs/-3.md` |
+| 4 | MOEX quotes + chart | ✅ Done | `docs/specs/-4.md` |
+| 7 | Chart UX (Lightweight Charts) | ✅ Done | `docs/specs/-7.md` |
+| 9 | Product core ADR (basis vs funding) | ✅ Done | `docs/decisions/001-product-core-moex-basis.md` |
+| 11 | Актуализировать AGENTS.md | 🔄 In progress | `docs/specs/-11.md` |
+| — | `BasisCalculator` + spot feed | ⬜ Backlog | ADR-001 |
+| — | AR `Instrument` / watchlist CRUD | ⬜ Backlog | — |
+| — | `DashboardController` + метрики | ⬜ Backlog | — |
+| — | Minitest → RSpec + SimpleCov | ⬜ Backlog | — |
 
 ---
 
