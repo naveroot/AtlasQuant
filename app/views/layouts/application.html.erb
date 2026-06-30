@@ -23,7 +23,18 @@
     <%= javascript_importmap_tags %>
   </head>
 
-  <body class="bg-gray-50 min-h-screen">
+  <body class="bg-gray-50 min-h-screen"
+    <% if ENV["POSTHOG_API_KEY"].present? %>
+      data-controller="analytics"
+      data-analytics-api-key-value="<%= ENV["POSTHOG_API_KEY"] %>"
+      data-analytics-host-value="<%= ENV.fetch("POSTHOG_HOST", "https://us.i.posthog.com") %>"
+      <% if logged_in? %>
+        data-analytics-user-id-value="<%= current_user.id %>"
+      <% end %>
+      <% if @analytics_events.present? %>
+        data-analytics-events-value="<%= analytics_events_json %>"
+      <% end %>
+    <% end %>>
     <header class="bg-white border-b border-gray-200">
       <nav class="container mx-auto px-5 py-4 flex items-center justify-between">
         <%= link_to "Atlas Quant", root_path, class: "text-xl font-bold text-gray-900 hover:text-blue-600" %>
@@ -31,6 +42,7 @@
         <% if logged_in? %>
           <%= link_to "Favorites", favorites_path, class: "text-sm font-medium text-gray-700 hover:text-blue-600" %>
         <% end %>
+        <%= link_to "Feedback", new_feedback_path, class: "text-sm font-medium text-gray-700 hover:text-blue-600" %>
 
         <div class="flex items-center gap-4 text-sm">
           <% if logged_in? %>

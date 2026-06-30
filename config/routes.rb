@@ -9,6 +9,7 @@ Rails.application.routes.draw do
   end
 
   resources :favorites, only: %i[index], controller: "favorite_instruments"
+  resource :feedback, only: %i[new create]
 
   root "home#index"
 end

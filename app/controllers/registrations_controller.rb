@@ -12,6 +12,7 @@ class RegistrationsController < ApplicationController
 
     if result.success?
       session[:user_id] = result.user.id
+      Analytics::TrackEvent.track_signup(user: result.user)
       redirect_to root_path, notice: "Welcome! Your account has been created."
     else
       @user = result.user

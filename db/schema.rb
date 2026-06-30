@@ -25,6 +25,15 @@ ActiveRecord::Schema[8.1].define(version: 2026_06_30_142819) do
     t.index ["user_id"], name: "index_favorite_instruments_on_user_id"
   end
 
+  create_table "feedbacks", force: :cascade do |t|
+    t.datetime "created_at", null: false
+    t.text "message", null: false
+    t.string "page_url"
+    t.datetime "updated_at", null: false
+    t.bigint "user_id"
+    t.index ["user_id"], name: "index_feedbacks_on_user_id"
+  end
+
   create_table "users", force: :cascade do |t|
     t.datetime "created_at", null: false
     t.string "email"
@@ -34,4 +43,5 @@ ActiveRecord::Schema[8.1].define(version: 2026_06_30_142819) do
   end
 
   add_foreign_key "favorite_instruments", "users"
+  add_foreign_key "feedbacks", "users"
 end
