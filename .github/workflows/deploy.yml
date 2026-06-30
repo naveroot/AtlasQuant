@@ -82,3 +82,4 @@ jobs:
           KAMAL_REGISTRY_PASSWORD: ${{ github.token }}
           RAILS_MASTER_KEY: ${{ secrets.RAILS_MASTER_KEY }}
           ATLAS_QUANT_DATABASE_PASSWORD: ${{ secrets.ATLAS_QUANT_DATABASE_PASSWORD }}
+          POSTHOG_API_KEY: ${{ secrets.POSTHOG_API_KEY }}
